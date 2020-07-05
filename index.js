@@ -50,6 +50,78 @@ var luar = (function () {
     );
   }
 
+  // Maximum number of tasks to execute in a single task cycle
+  var computedTaskLimit = 2000;
+  // Task function list (and current index into said list)
+  var computedTasks = [], computedI = 0;
+  // Mutex-y lock for processing the current computed task list, so that we
+  // don't try to run the same tasks twice
+  var computedLock = false;
+
+  // Throw a "stack overflow" error if the length of computedTasks becomes
+  // bigger than computedTaskLimit
+  function computedOverflow() {
+    var taskFnNames = [];
+
+    // Gather function names of the last 10 tasks
+    // Most likely contains something like [badFn1, badFn2, badFn1, badFn2, ...]
+    for (var i = computedTasks.length - 10 - 1; i < computedTasks.length; i++) {
+      taskFnNames[taskFnNames.length] = i + ": " + getFnName(computedTasks[i]);
+    }
+
+    throw new Error(makeErrorMessage(
+      "Maximum computed task length exceeded (stack overflow!)",
+      "Last 10 functions in the task:\n" +
+      taskFnNames.join("\n")
+    ));
+  }
+  // Process the current computed task list (and all of its dependencies)
+  function computedProcess() {
+    // Attempt to lock the mutex-thing
+    if (computedLock) return;
+    computedLock = true;
+
+    // Go through and execute all the computed tasks
+    for (; computedI < computedTasks.length; computedI++) {
+      // Call this task
+      computedTasks[computedI]();
+      // Check for overflow
+      if (computedI > computedOverflow) {
+        computedOverflow();
+      }
+
+      // We could try using error handling?
+      /*
+      var fn = computedTasks[computedI];
+      try {
+        fn();
+      } catch (err) {
+        // Potentially handle this error
+      }
+      */
+    }
+
+    // Reset the list of tasks
+    computedTasks = [];
+    computedI = 0;
+    // And unlock the mutex-thing
+    computedLock = false;
+  }
+  // Notify a computed task that one of its dependencies has updated
+  function computedNotify(fn) {
+    // Ensure that this task is not already queued to be executed
+    for (var i = computedI; i < computedTasks.length; i++) {
+      if (computedTasks[i] === fn) return;
+    }
+
+    // Push this task onto the computedTasks list
+    computedTasks[computedTasks.length] = fn;
+
+    // Make sure the task list is being processed (so that the new task actually
+    // runs)
+    computedProcess();
+  }
+
   // [Export] Make a JavaScript object reactive
   function observe(obj) {
   }
