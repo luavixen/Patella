@@ -1,0 +1,1 @@
+const { observe, computed } = require(".");
