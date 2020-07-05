@@ -29,16 +29,44 @@
 var luar = (function () {
   "use strict";
 
+  // Check if an object has a property, ignoring the object's prototypes
+  function hasOwnProperty(obj, key) {
+    return Object.prototype.hasOwnProperty.call(obj, key);
+  }
+
+  // Get the name of a function, or "unknown" if unavailable
+  function getFnName(fn) {
+    if (typeof fn === "function" && fn.name) {
+      return fn.name;
+    } else {
+      return "unknown";
+    }
+  }
+  // Make a Luar error/warning message string
+  function makeErrorMessage(header, body, warn) {
+    return (
+      "[Luar] " + (warn ? "WRN " : "ERR ") +
+      header + "\n" + body
+    );
+  }
+
+  // [Export] Make a JavaScript object reactive
   function observe(obj) {
   }
 
+  // [Export] Execute a function as a computed task and record its dependencies.
+  // The task will then be re-run whenever its dependencies change.
   function computed(fn) {
   }
 
+  // For environments that use CommonJS modules, export the observe() and
+  // computed() functions
   if (typeof exports === "object") {
     exports.observe = observe;
     exports.computed = computed;
   }
 
+  // For other environments, return both functions which will be put into the
+  // global "luar"
   return { observe: observe, computed: computed };
 })();
