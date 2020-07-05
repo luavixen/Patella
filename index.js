@@ -26,6 +26,8 @@
  * SOFTWARE.
  */
 
+const { observe } = require(".");
+
 var luar = (function () {
   "use strict";
 
@@ -122,23 +124,129 @@ var luar = (function () {
     computedProcess();
   }
 
-  // [Export] Make a JavaScript object reactive
+  // Hint property to add to observed objects, so that they don't get observed
+  // again
+  var observeHint = "__luar";
+  // Internal observe, known good params
   function observe(obj) {
+    // Don't observe it if it has the hint
+    if (hasOwnProperty(obj, observeHint)) return;
+
+    // The shadow object contains the actual values modified/returned by the
+    // getters and setters
+    var shadow = {};
+
+    // List of dependant computed tasks (stored as { [key]: task[] })
+    var dependencyMap = {};
+    // Get a value from a key and update dependencies if we are currently in a
+    // computed task
+    function reactiveGet(key) {
+      // Get the value to return
+      var val = shadow[key];
+
+      // Get the current task
+      var fn = computedState.tasks[computedState.i];
+      // Return if there is no task
+      if (!fn) return val;
+
+      // Get the dependency array for this key (or create it)
+      var deps = dependencyMap[key];
+      if (!deps) deps = dependencyMap[key] = [];
+
+      // Ensure that the task is not already a dependency
+      for (var i = 0; i < deps.length; i++) {
+        if (deps[i] === fn) return val;
+      }
+      // Add the task to the dependency array
+      deps[deps.length] = fn;
+
+      return val;
+    }
+    // Update a key and notify all of the key's dependencies
+    function reactiveSet(key, val) {
+      // Update the key
+      shadow[key] = val;
+
+      // Get the dependency array for this key
+      var deps = dependencyMap[key];
+      // Return if there are no dependencies
+      if (!deps) return;
+
+      // Notify all the dependencies
+      for (var i = 0; i < deps.length; i++) {
+        computedNotify(deps[i]);
+      }
+    }
+
+    // Getter/setter definitions to pass to Object.defineProperties
+    var props = {};
+
+    // Create a reactive key on an object
+    function reactiveCreate(key) {
+      // Get the original value from the original object
+      var val = obj[key];
+      // If the value is also an object, make it reactive too (deep reactivity)
+      if (typeof val === "object") {
+        observe(val);
+      }
+
+      // Set this value in the shadow object ...
+      shadow[key] = val;
+      // ... and define the getters/setters
+      props[key] = {
+        get: function () {
+          return reactiveGet(key);
+        },
+        set: function (val) {
+          reactiveSet(key, val);
+        }
+      };
+    }
+
+    // Loop over the keys of the object and make any keys that are actually part
+    // of the object reactive
+    for (var key in obj) {
+      if (!hasOwnProperty(obj, key)) continue;
+      reactiveCreate(key);
+    }
+
+    // Apply all the getters/setters ...
+    Object.defineProperties(obj, props);
+    // ... and define the hint, but make it non-enumerable
+    Object.defineProperty(obj, observeHint, {
+      enumerable: false,
+      value: true
+    });
+
+    return obj;
   }
 
+  // [Export] Make a JavaScript object reactive
+  function _observe(obj) {
+    // Since this is an export, typecheck its arguments
+    if (typeof obj !== "object") {
+      throw new Error(makeErrorMessage(
+        "Attempted to observe a value that is not an object",
+        "observe(obj) expects \"obj\" to be \"object\", got \"" + typeof obj + "\""
+      ));
+    }
+
+    // Call internal observe
+    observe(obj);
+  }
   // [Export] Execute a function as a computed task and record its dependencies.
   // The task will then be re-run whenever its dependencies change.
-  function computed(fn) {
+  function _computed(fn) {
   }
 
   // For environments that use CommonJS modules, export the observe() and
   // computed() functions
   if (typeof exports === "object") {
-    exports.observe = observe;
-    exports.computed = computed;
+    exports.observe = _observe;
+    exports.computed = _computed;
   }
 
   // For other environments, return both functions which will be put into the
   // global "luar"
-  return { observe: observe, computed: computed };
+  return { observe: _observe, computed: _computed };
 })();
