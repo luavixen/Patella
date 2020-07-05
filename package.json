@@ -12,18 +12,15 @@
     "model",
     "mvc"
   ],
-
   "main": "index.js",
   "types": "index.d.ts",
-
   "scripts": {
-    "test": "mocha"
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js"
   },
-
   "devDependencies": {
-    "mocha": "^8.0.1"
+    "mocha": "^8.0.1",
+    "nyc": "^15.1.0"
   },
-
   "repository": {
     "type": "git",
     "url": "git+https://github.com/luawtf/luar.git"
