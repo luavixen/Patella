@@ -1,0 +1,35 @@
+{
+  "name": "luar",
+  "version": "1.0.0-PRERELEASE",
+  "description": "Extremely small, fast and compatible (IE 9 and up) reactive programming library, similar to Hyperactiv.",
+  "author": "Lua MacDougall <luawhat@gmail.com> (https://lua.wtf/)",
+  "license": "MIT",
+  "keywords": [
+    "reactive",
+    "react",
+    "computed",
+    "observable",
+    "model",
+    "mvc"
+  ],
+
+  "main": "index.js",
+  "types": "index.d.ts",
+
+  "scripts": {
+    "test": "mocha"
+  },
+
+  "devDependencies": {
+    "mocha": "^8.0.1"
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luawtf/luar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/luawtf/luar/issues"
+  },
+  "homepage": "https://github.com/luawtf/luar#readme"
+}
