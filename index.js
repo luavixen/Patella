@@ -27,11 +27,9 @@
  */
 
 var luar = (function () {
-  "use strict";
-
   // Check if a value is an object
   function isObject(v) {
-    return v && typeof v === "object" && v.constructor !== Array;
+    return v && typeof v === "object" && !Array.isArray(v);
   }
   // Check if a value is a function
   function isFunction(v) {
@@ -236,8 +234,7 @@ var luar = (function () {
     if (!isObject(obj)) {
       throw new Error(makeErrorMessage(
         "Attempted to observe a value that is not an object",
-        "observe(obj) expects \"obj\" to be \"object\", got \"" +
-        (obj !== null ? typeof obj : "null") + "\""
+        "observe(obj) expects \"obj\" to be an object, got \"" + obj + "\""
       ));
     }
 
@@ -251,8 +248,7 @@ var luar = (function () {
     if (!isFunction(fn)) {
       throw new Error(makeErrorMessage(
         "Attempted to register a value that is not a function as a computed task",
-        "computed(fn) expects \"fn\" to be \"function\", got \"" +
-        typeof fn + "\""
+        "computed(fn) expects \"fn\" to to be a function, got \"" + fn + "\""
       ));
     }
 
