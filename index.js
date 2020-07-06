@@ -1,4 +1,4 @@
-/*!
+/*
  * == Luar ==
  * Extremely small, fast and compatible (IE 9 and up) reactive programming
  * library, similar to Hyperactiv.
@@ -103,16 +103,6 @@ var luar = (function () {
       if (computedI > computedTaskLimit) {
         computedOverflow();
       }
-
-      // We could try using error handling?
-      /*
-      var fn = computedTasks[computedI];
-      try {
-        fn();
-      } catch (err) {
-        // Potentially handle this error
-      }
-      */
     }
 
     // Reset the list of tasks
