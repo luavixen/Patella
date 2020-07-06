@@ -14,8 +14,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -29,17 +29,26 @@
 var luar = (function () {
   "use strict";
 
+  // Check if a value is an object
+  function isObject(v) {
+    return v && typeof v === "object" && v.constructor !== Array;
+  }
+  // Check if a value is a function
+  function isFunction(v) {
+    return typeof v === "function";
+  }
+
   // Check if an object has a property, ignoring the object's prototypes
   function hasOwnProperty(obj, key) {
     return Object.prototype.hasOwnProperty.call(obj, key);
   }
 
-  // Get the name of a function, or "unknown" if unavailable
+  // Get the name of a function, or "anonymous" if unavailable
   function getFnName(fn) {
-    if (typeof fn === "function" && fn.name) {
+    if (isFunction(fn) && fn.name) {
       return fn.name;
     } else {
-      return "unknown";
+      return "anonymous";
     }
   }
   // Make a Luar error/warning message string
@@ -61,6 +70,11 @@ var luar = (function () {
   // Throw a "stack overflow" error if the length of computedTasks becomes
   // bigger than computedTaskLimit
   function computedOverflow() {
+    // Reset the current state so that other computed functions aren't broken
+    computedTasks = [];
+    computedI = 0;
+    computedLock = false;
+
     var taskFnNames = [];
 
     // Gather function names of the last 10 tasks
@@ -86,7 +100,7 @@ var luar = (function () {
       // Call this task
       computedTasks[computedI]();
       // Check for overflow
-      if (computedI > computedOverflow) {
+      if (computedI > computedTaskLimit) {
         computedOverflow();
       }
 
@@ -129,6 +143,13 @@ var luar = (function () {
   function observe(obj) {
     // Don't observe it if it has the hint
     if (hasOwnProperty(obj, observeHint)) return;
+    // Define the hint on this object and make it non-enumerable (done before
+    // creating the object to allow for cyclic references)
+    Object.defineProperty(obj, observeHint, {
+      enumerable: false,
+      configurable: false,
+      value: true
+    });
 
     // The shadow object contains the actual values modified/returned by the
     // getters and setters
@@ -163,7 +184,7 @@ var luar = (function () {
     // Update a key and notify all of the key's dependencies
     function reactiveSet(key, val) {
       // Make the value reactive if it is an object
-      if (typeof val === "object") {
+      if (isObject(val)) {
         observe(val);
       }
 
@@ -189,7 +210,7 @@ var luar = (function () {
       // Get the original value from the original object
       var val = obj[key];
       // If the value is also an object, make it reactive too (deep reactivity)
-      if (typeof val === "object") {
+      if (isObject(val)) {
         observe(val);
       }
 
@@ -213,13 +234,8 @@ var luar = (function () {
       reactiveCreate(key);
     }
 
-    // Apply all the getters/setters ...
+    // Apply all the getters/setters we just created
     Object.defineProperties(obj, props);
-    // ... and define the hint, but make it non-enumerable
-    Object.defineProperty(obj, observeHint, {
-      enumerable: false,
-      value: true
-    });
 
     return obj;
   }
@@ -227,10 +243,11 @@ var luar = (function () {
   // [Export] Make a JavaScript object reactive
   function _observe(obj) {
     // Since this is an export, typecheck its arguments
-    if (typeof obj !== "object") {
+    if (!isObject(obj)) {
       throw new Error(makeErrorMessage(
         "Attempted to observe a value that is not an object",
-        "observe(obj) expects \"obj\" to be \"object\", got \"" + typeof obj + "\""
+        "observe(obj) expects \"obj\" to be \"object\", got \"" +
+        (obj !== null ? typeof obj : "null") + "\""
       ));
     }
 
@@ -241,10 +258,11 @@ var luar = (function () {
   // The task will then be re-run whenever its dependencies change.
   function _computed(fn) {
     // Since this is an export, typecheck its arguments
-    if (typeof fn !== "function") {
+    if (!isFunction(fn)) {
       throw new Error(makeErrorMessage(
         "Attempted to register a value that is not a function as a computed task",
-        "computed(fn) expects \"fn\" to be \"function\", got \"" + typeof fn + "\""
+        "computed(fn) expects \"fn\" to be \"function\", got \"" +
+        typeof fn + "\""
       ));
     }
 
@@ -254,10 +272,8 @@ var luar = (function () {
     if (computedTasks.length !== 0) {
       console.warn(makeErrorMessage(
         "Creating computed functions from within another computed function is not recommended",
-        "Offending computed function: " +
-        getFunctionName(computedTasks[computedI]) + "\n" +
-        "Newly created computed function: " +
-        getFunctionName(fn),
+        "Offending computed function: " + getFnName(computedTasks[computedI]) +
+        "\nNewly created computed function: " + getFnName(fn),
         true
       ));
     }
@@ -268,6 +284,7 @@ var luar = (function () {
 
   // For environments that use CommonJS modules, export the observe() and
   // computed() functions
+  /* istanbul ignore else */
   if (typeof exports === "object") {
     exports.observe = _observe;
     exports.computed = _computed;
