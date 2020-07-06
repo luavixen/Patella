@@ -417,23 +417,123 @@ describe("reactivity edge cases", () => {
   });
 
   it("observe makes objects reactive recursively", () => {
-    // TODO
+    // Create two objects, put one inside the other, and observe the parent
+    const subObj = { x: 10 };
+    const obj = { a: 10, b: 20, sub: subObj };
+    observe(obj);
+
+    let times = 0;
+    computed(() => {
+      subObj.x;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Since we observed its parent, subObj is also reactive
+    subObj.x = 20;
+    assert.strictEqual(times, 2);
   });
 
   it("observe will make objects set onto a reactive property into reactive objects themselves", () => {
-    // TODO
+    // Create a reactive object
+    const obj = makeObserved();
+
+    // Create a non-reactive object and set it onto one of the reactive
+    // properties of obj
+    const subObj = { x: true };
+    obj.a = subObj;
+
+    let times = 0;
+    computed(() => {
+      subObj.x;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Since it was set onto a reactive property, it was also made reactive
+    subObj.x = false;
+    assert.strictEqual(times, 2);
   });
 
   it("arrays are not reactive", () => {
-    // TODO
+    // Create a reactive object with an array
+    const obj = { arr: [1, 2, 3, 4] };
+    observe(obj);
+
+    // Count how many times this fancy array-based computed property gets
+    // notified
+    let times = 0;
+    computed(() => {
+      let x = 0;
+      for (const elem of obj.arr) {
+        x += elem + 10;
+      }
+
+      for (let i = 0; i < obj.arr.length; i++) {
+        x -= obj.arr[i];
+      }
+
+      x;
+
+      times++;
+    });
+    // Should've just been run once so far
+    assert.strictEqual(times, 1);
+
+    // Not reactive!
+    obj.arr[0] = 0;
+    assert.strictEqual(times, 1);
+
+    // Not reactive!
+    obj.arr.push(5);
+    assert.strictEqual(times, 1);
+
+    // There we go! This works because this changes the actual value we depend
+    // on instead of the contents of the value
+    obj.arr = obj.arr;
+    assert.strictEqual(times, 2);
   });
 
   it("properties added after observation are not reactive", () => {
-    // TODO
+    // Create a new reactive object
+    const obj = makeObserved();
+
+    // Add the new property "added", which will not be reactive as it was added
+    // after creation
+    obj.added = 10;
+
+    let times = 0;
+    computed(() => {
+      obj.added;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Not reactive!
+    obj.added += 5;
+    assert.strictEqual(times, 1);
   });
 
   it("re-running observe on an object will not make properties added after observation reactive", () => {
-    // TODO
+        const obj = makeObserved();
+        obj.added = 10;
+
+        let times = 0;
+        computed(() => {
+          obj.added;
+          times++;
+        });
+        assert.strictEqual(times, 1);
+
+        // Not reactive!
+        obj.added += 5;
+        assert.strictEqual(times, 1);
+
+        observe(obj);
+
+        // Still not reactive!
+        obj.added += 5;
+        assert.strictEqual(times, 1);
   });
 
 });
