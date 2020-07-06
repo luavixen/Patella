@@ -26,8 +26,6 @@
  * SOFTWARE.
  */
 
-const { observe } = require(".");
-
 var luar = (function () {
   "use strict";
 
@@ -145,7 +143,7 @@ var luar = (function () {
       var val = shadow[key];
 
       // Get the current task
-      var fn = computedState.tasks[computedState.i];
+      var fn = computedTasks[computedI];
       // Return if there is no task
       if (!fn) return val;
 
@@ -164,6 +162,11 @@ var luar = (function () {
     }
     // Update a key and notify all of the key's dependencies
     function reactiveSet(key, val) {
+      // Make the value reactive if it is an object
+      if (typeof val === "object") {
+        observe(val);
+      }
+
       // Update the key
       shadow[key] = val;
 
@@ -232,11 +235,35 @@ var luar = (function () {
     }
 
     // Call internal observe
-    observe(obj);
+    return observe(obj);
   }
   // [Export] Execute a function as a computed task and record its dependencies.
   // The task will then be re-run whenever its dependencies change.
   function _computed(fn) {
+    // Since this is an export, typecheck its arguments
+    if (typeof fn !== "function") {
+      throw new Error(makeErrorMessage(
+        "Attempted to register a value that is not a function as a computed task",
+        "computed(fn) expects \"fn\" to be \"function\", got \"" + typeof fn + "\""
+      ));
+    }
+
+    // Also emit a warning if the user is creating a computed task from within
+    // another computed task, as this can lead to duplicate tasks being
+    // registered when the offender is re-run when its dependencies change
+    if (computedTasks.length !== 0) {
+      console.warn(makeErrorMessage(
+        "Creating computed functions from within another computed function is not recommended",
+        "Offending computed function: " +
+        getFunctionName(computedTasks[computedI]) + "\n" +
+        "Newly created computed function: " +
+        getFunctionName(fn),
+        true
+      ));
+    }
+
+    // "Notify" this new computed task to register it in all of its dependencies
+    computedNotify(fn);
   }
 
   // For environments that use CommonJS modules, export the observe() and
