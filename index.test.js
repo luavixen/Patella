@@ -314,7 +314,24 @@ describe("computed task functionality", () => {
     assert.match(warningMessage,
       /Creating computed functions from within another computed function is not recommended/
     );
-  })
+  });
+
+  it("computed functions will propagate errors to where they get triggered", () => {
+    const obj = makeObserved();
+
+    // Generates an error if obj.a is set to a value above 30
+    computed(() => {
+      if (obj.a > 30) {
+        throw new Error("Oops!");
+      }
+    });
+
+    // Cause an error!
+    assert.throws(() => obj.a = 31, "Oops!");
+
+    // Note that the value will still change
+    assert.strictEqual(obj.a, 31);
+  });
 
 });
 
@@ -515,25 +532,25 @@ describe("reactivity edge cases", () => {
   });
 
   it("re-running observe on an object will not make properties added after observation reactive", () => {
-        const obj = makeObserved();
-        obj.added = 10;
+    const obj = makeObserved();
+    obj.added = 10;
 
-        let times = 0;
-        computed(() => {
-          obj.added;
-          times++;
-        });
-        assert.strictEqual(times, 1);
+    let times = 0;
+    computed(() => {
+      obj.added;
+      times++;
+    });
+    assert.strictEqual(times, 1);
 
-        // Not reactive!
-        obj.added += 5;
-        assert.strictEqual(times, 1);
+    // Not reactive!
+    obj.added += 5;
+    assert.strictEqual(times, 1);
 
-        observe(obj);
+    observe(obj);
 
-        // Still not reactive!
-        obj.added += 5;
-        assert.strictEqual(times, 1);
+    // Still not reactive!
+    obj.added += 5;
+    assert.strictEqual(times, 1);
   });
 
 });
