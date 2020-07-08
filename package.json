@@ -1,22 +1,26 @@
 {
   "name": "luar",
-  "version": "1.0.0-PRERELEASE",
-  "description": "Extremely small, fast and compatible (IE 9 and up) reactive programming library, similar to Hyperactiv.",
+  "version": "1.0.0",
+  "description": "Luar is a library for facilitating extremely simple Reactive Programming in JavaScript, inspired by Vue.js and Hyperactiv.",
   "author": "Lua MacDougall <luawhat@gmail.com> (https://lua.wtf/)",
   "license": "MIT",
   "keywords": [
     "reactive",
     "react",
     "computed",
+    "computed properties",
+    "properties",
     "observable",
     "model",
     "mvc"
   ],
   "main": "index.js",
+  "unpkg": "index.min.js",
   "types": "index.d.ts",
   "scripts": {
     "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js",
-    "minify": "terser --compress --mangle --output index.min.js index.js"
+    "minify": "terser --compress --mangle --output index.min.js index.js",
+    "prepublishOnly": "npm test && npm run minify"
   },
   "devDependencies": {
     "chai": "^4.2.0",
