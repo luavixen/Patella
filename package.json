@@ -15,12 +15,14 @@
   "main": "index.js",
   "types": "index.d.ts",
   "scripts": {
-    "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js"
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js",
+    "minify": "terser --compress --mangle --output index.min.js index.js"
   },
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^8.0.1",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "terser": "^4.8.0"
   },
   "repository": {
     "type": "git",
