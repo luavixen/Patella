@@ -68,11 +68,6 @@ var luar = (function () {
   // Throw a "stack overflow" error if the length of computedTasks becomes
   // bigger than computedTaskLimit
   function computedOverflow() {
-    // Reset the current state so that other computed functions aren't broken
-    computedTasks = [];
-    computedI = 0;
-    computedLock = false;
-
     var taskFnNames = [];
 
     // Gather function names of the last 10 tasks
@@ -93,21 +88,25 @@ var luar = (function () {
     if (computedLock) return;
     computedLock = true;
 
-    // Go through and execute all the computed tasks
-    for (; computedI < computedTasks.length; computedI++) {
-      // Call this task
-      computedTasks[computedI]();
-      // Check for overflow
-      if (computedI > computedTaskLimit) {
-        computedOverflow();
+    // Wrap this in a try-finally block so that we always remember to
+    // unlock and clean up the state once we're done, even if we fail
+    try {
+      // Go through and execute all the computed tasks
+      for (; computedI < computedTasks.length; computedI++) {
+        // Call this task
+        computedTasks[computedI]();
+        // Check for overflow
+        if (computedI > computedTaskLimit) {
+          computedOverflow();
+        }
       }
+    } finally {
+      // Done! Reset the list of tasks
+      computedTasks = [];
+      computedI = 0;
+      // And unlock the mutex-thing
+      computedLock = false;
     }
-
-    // Reset the list of tasks
-    computedTasks = [];
-    computedI = 0;
-    // And unlock the mutex-thing
-    computedLock = false;
   }
   // Notify a computed task that one of its dependencies has updated
   function computedNotify(fn) {
