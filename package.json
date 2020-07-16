@@ -30,10 +30,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luawtf/luar.git"
+    "url": "git+https://github.com/luawtf/Luar.git"
   },
   "bugs": {
-    "url": "https://github.com/luawtf/luar/issues"
+    "url": "https://github.com/luawtf/Luar/issues"
   },
-  "homepage": "https://github.com/luawtf/luar#readme"
+  "homepage": "https://github.com/luawtf/Luar#readme"
 }
