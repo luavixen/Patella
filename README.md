@@ -1,6 +1,4 @@
-<h1 align="center">
-  &#x1F501; Luar
-</h1>
+<h1 align="center">&#x1F501; Luar</h1>
 <p align="center"><i>
   Luar is a library for facilitating extremely simple <a href="https://wikipedia.org/wiki/Reactive_programming">Reactive Programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
 </i></p>
