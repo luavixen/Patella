@@ -1,0 +1,46 @@
+name: continuous integration
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  release:
+    types: [created]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: setup node
+      uses: actions/setup-node@v2-beta
+      with:
+        node-version: 12
+    - name: install dependencies
+      run: npm ci
+    - name: run tests
+      run: npm test
+    - name: upload coverage
+      uses: coverallsapp/github-action@v1.1.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-npm:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+    - name: setup node
+      uses: actions/setup-node@v2-beta
+      with:
+        node-version: 12
+        registry-url: https://registry.npmjs.org/
+    - name: install dependencies
+      run: npm ci
+    - name: publish to NPM
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
