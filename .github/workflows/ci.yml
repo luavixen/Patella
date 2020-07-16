@@ -28,6 +28,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   publish-npm:
+    if: github.event_name == 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     steps:
