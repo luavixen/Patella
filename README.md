@@ -1,3 +1,24 @@
+<p align="center">
+  <a href="https://www.npmjs.com/package/luar">
+    <img src="https://img.shields.io/npm/v/luar?style=flat-square">
+  </a>
+  <a href="https://www.npmjs.com/package/luar?activeTab=dependencies">
+    <img src="https://img.shields.io/badge/dependencies-0%20dependencies-blue?style=flat-square">
+  </a>
+  <a href="https://bundlephobia.com/result?p=luar">
+    <img src="https://img.shields.io/bundlephobia/minzip/luar?style=flat-square">
+  </a>
+  <a href="https://github.com/luawtf/Luar/actions">
+    <img src="https://img.shields.io/github/workflow/status/luawtf/Luar/continuous%20integration/master?style=flat-square">
+  </a>
+  <a href="https://coveralls.io/github/luawtf/Luar">
+    <img src="https://img.shields.io/coveralls/github/luawtf/Luar?style=flat-square">
+  </a>
+  <a href="https://github.com/luawtf/Luar/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/luawtf/Luar?style=flat-square">
+  </a>
+</p>
+
 <h1 align="center">&#x1F501; Luar</h1>
 <p align="center"><i>
   Luar is a library for facilitating extremely simple <a href="https://wikipedia.org/wiki/Reactive_programming">Reactive Programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
