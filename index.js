@@ -26,7 +26,7 @@
  * SOFTWARE.
  */
 
-var luar = (function () {
+var Luar = (function () {
   // Check if a value is an object
   function isObject(v) {
     return v && typeof v === "object" && !Array.isArray(v);
@@ -276,6 +276,6 @@ var luar = (function () {
   }
 
   // For other environments, return both functions which will be put into the
-  // global "luar"
+  // global "Luar"
   return { observe: _observe, computed: _computed };
 })();
