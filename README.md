@@ -3,7 +3,7 @@
     <img src="https://img.shields.io/npm/v/luar?style=flat-square">
   </a>
   <a href="https://www.npmjs.com/package/luar?activeTab=dependencies">
-    <img src="https://img.shields.io/badge/dependencies-0%20dependencies-blue?style=flat-square">
+    <img src="https://img.shields.io/badge/dependencies-none-blue?style=flat-square">
   </a>
   <a href="https://bundlephobia.com/result?p=luar">
     <img src="https://img.shields.io/bundlephobia/minzip/luar?style=flat-square">
@@ -19,220 +19,314 @@
   </a>
 </p>
 
-<h1 align="center">&#x1F501; Luar</h1>
+<h2 align="center">Luar &#x1F501;</h2>
 <p align="center"><i>
-  Luar is a library for facilitating extremely simple <a href="https://wikipedia.org/wiki/Reactive_programming">Reactive Programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
+  Luar provides unctions for facilitating simple <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
+  Luar is compatible with ECMAScript 5 (2009) and up and functions without issue on Internet Explorer 8 and newer.
 </i></p>
 
 ## Description
-Luar is one of the simplest and smallest implementations of the reactive programming paradigm for the JavaScript (ECMAScript 5) programming language *(with TypeScript support)*.
-Written in a single script file containing 300~ lines of fully commented ES5, it is easy to understand and modify, and when minified and gzipped it is around 800 bytes.
-Also, it works on any browser from the last 10 years (IE 9 and up)!
+Luar is a simple and concise implementation of the reactive programming paradigm for JavaScript (with included TypeScript support).
+It is compatible with almost any browser released since 2010 and is also very small, weighing at around 800 bytes when minified and gzipped, it only contains about 300 lines of code.
 
-Luar provides functions for "observing" JavaScript objects and for creating "computed" functions which operate on the data inside of those objects.
-When the data in an observed object updates, any computed functions that depend on that data are re-run.
+Luar provides functions for "observing" JavaScript objects and for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects.
+When the data in an observed object updates, any computed tasks that depend on that data are re-run.
+I find this functionality most useful for MVC (Model-View-Controller) style declarative UI creation!
 
-For example, let's use Luar to make a webpage reactive:
-```javascript
-const { observe, computed } = require("luar");
+On that note, let's use Luar to make a reactive webpage that says hello to a user:
+```html
+<h2 id="hello-message"></h2>
+<input type="text" oninput="model.first = value">
+<input type="text" oninput="model.last = value">
 
-// Find the title and content elements on the page
-const titleElem = document.getElementById("title");
-const contentElem = document.getElementById("content");
+<script>
+  const elem = document.findElementById("hello-message");
 
-// Create our model data which we will connect to those elements
-const model = observe({
-  title: "Hello, world",
-  content: "Powered by Luar"
-});
-
-// Connect the model to the elements
-computed(() => { titleElem.innerText = model.title; });     // #1
-computed(() => { contentElem.innerText = model.content; }); // #2
-
-// Now let's update some data!
-model.title = "Luar - Reactive Programming"; // Will re-run #1 as #1 depends on model.title
-// The #title element will update instantly, Luar is synchronous
-
-// And add some more content
-model.content += ", the elements on this site are tied to a reactive object"; // Will re-run #2
+  // Our model object contains first and last fields
+  const model = observe({ first: "", last: "" });
+  // "Declare" that the element's inner text should be something like Hello, first last!
+  computed(() => elem.innerText = `Hello, ${model.first} ${model.last}!`);
+</script>
 ```
+Now the `hello-message` header will say hello to the user, updating its content as soon as the model changes (on input)!
+This is known as "declarative UI", where you declare the content of your UI and how it connects to your data, and the UI updates \~reactively\~.
+You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/).
 
 ## Installation
-Through NPM:
-```
+Luar is available on [NPM](https://www.npmjs.com/package/luar):
+```sh
 npm install luar
 ```
-Or through Unpkg for the browser:
+```javascript
+import { observe, computed } from "luar";
+```
+Or, for people working without a bundler, it can be included from [UNPKG](https://www.unpkg.com/browse/luar@latest/):
 ```html
 <script src="https://unpkg.com/luar"></script>
+<script>
+  Luar.observe({});
+  Luar.computed(function () {});
+</script>
 ```
 
 ## Usage
+ - [1. Basic reactivity](#1-basic-reactivity)
+ - [2. Multiple objects and computed properties](#2-multiple-objects-and-computed-properties)
+ - [3. Deep reactivity and implicit observation](#3-deep-reactivity-and-implicit-observation)
+ - [4. Cleaning up](#4-cleaning-up)
+ - [5. Reactivity pitfalls](#5-reactivity-pitfalls)
 
-### Basics
-Let's start with `observe(obj)`, it takes an object as an argument and makes the object's properties "reactive" when used with computed functions.
+### 1. Basic reactivity
 ```javascript
-const model = observe({
-  a: 10,
-  b: 20,
-  person: {
-    first: "John",
-    last: "Smith"
-  }
-});
+let coords = { x: 10, y: 20 };
+let z = x + y;
+
+console.log(z); // Output: "30" ✔
+
+coords.x += 10;
+coords.y = 21;
+
+console.log(z); // Output: "30" ✘
 ```
-The `model` variable contains a JavaScript object that functions exactly like a normal object but, when its data is changed, will update any dependant computed functions.
 
-Speaking of which, let's add a computed function!
 ```javascript
-const model = observe({
-  a: 10,
-  b: 20,
-  person: {
-    first: "John",
-    last: "Smith"
-  }
-});
+let coords = observe({ x: 10, y: 20 });
+let z; computed(() => z = x + y);
 
-computed(() => {
-  const sum = model.a + model.b;
-  console.log("The sum of a and b is", sum);
-});
+console.log(z); // Output: "30" ✔
+
+coords.x += 10;
+coords.y = 21;
+
+console.log(z); // Output: "41" ✔
 ```
-Since computed functions are always evaluated immediately (and synchronously), this code outputs "The sum of a and b is 30" as soon as the call to `computed(fn)` runs.
 
-Now, let's actually do some reactive stuff!
+### 2. Multiple objects and computed properties
 ```javascript
-const model = observe({
-  a: 10,
-  b: 20,
-  person: {
-    first: "John",
-    last: "Smith"
-  }
+// Setting up some reactive objects that contain some data about a specific US president ...
+const person = observe({
+  name: { first: "George", last: "Washington" },
+  age: 288
+});
+const account = observe({
+  user: "big-george12",
+  password: "IHateTheQueen!1"
 });
 
-computed(() => {
-  const sum = model.a + model.b;
-  console.log("The sum of a and b is", sum);
-}); // Prints "The sum of a and b is 30"
+// Declare that we will output a log message whenever person.name.first, account.user, or person.age are updated
+computed(() => console.log(
+  `${person.name.first}'s username is ${account.user} (${person.age} years old)`
+)); // Output "George's username is big-george12 (288 years old)"
 
-model.a = 11; // Prints "The sum of a and b is 31"
+// Update one of the dependents
+account.password = "not-telling"; // Does not output (no computed task depends on this)
 
-model.b = model.a; // Prints "The sum of a and b is 22"
+// All operators work
+account.user += "3"; // Output "George's username is big-george123 (288 years old)"
+person.age++; // Output "George's username is big-george123 (289 years old)"
 
-model.a = model.a; // Prints "The sum of a and b is 22" again, even though the
-                   // values are the same
+// You can even replace objects (and arrays) entirely!
+// This will automatically observe this new object and will correctly carry across any dependent computed tasks
+person.name = {
+  first: "Abraham",
+  last: "Lincoln"
+}; // Output "Abraham's username is big-george123 (289 years old)"
 ```
-Cool, that's reactivity in a nutshell.
-Since the computed function depends on `model.a` and `model.b`, whenever those values are changed the computed function will be re-run.
 
-### Advanced usage
-Here is a much more detailed example, it contains various computed functions that depend on eachother and trigger eachother.
-It should also give you some ideas on how a MVC (Model View Controller) system can be made using the power of Luar!
 ```javascript
-const model = observe({
-  length: 0, fullLength: 0,
-  person: {
-    first: "John",
-    last: "Smith",
-    full: ""
+// Create our nums object, with some default values for properties that will be computed
+const nums = observe({
+  a: 33, b: 23, c: 84,
+  x: 0,
+  sumAB: 0, sumAX: 0, sumCX: 0,
+  sumAllSums: 0
+});
+
+// Declare that (x) will be equal to (a + b + c)
+computed(() => nums.x = nums.a + nums.b + nums.c);
+// Declare that (sumAB) will be equal to (a + b)
+computed(() => nums.sumAB = nums.a + nums.b);
+// Declare that (sumAX) will be equal to (a + x)
+computed(() => nums.sumAX = nums.a + nums.x);
+// Declare that (sumCX) will be equal to (c + x)
+computed(() => nums.sumCX = nums.c + nums.x);
+// Declare that (sumAllSums) will be equal to (sumAB + sumAX + sumCX)
+computed(() => nums.sumAllSums = nums.sumAB + nums.sumAX + nums.sumCX);
+
+// Now lets check the (sumAllSums) value
+console.log(nums.sumAllSums); // Output "453"
+
+// Notice that when we update one value ...
+nums.c += 2;
+// ... all the other values update! (since we declared them as such)
+console.log(nums.sumAllSums); // Output "459"
+```
+
+### 3. Deep reactivity and implicit observation
+```javascript
+const eventSummary = observe({
+  title: "Important Meeting #283954",
+  description: "Will be meeting with the president of BigImportantFirmCo to talk business",
+  summary: null,
+  guestInfo: {
+    you:        { name: "",         id: 7999782267 },
+    president:  { name: "Mr. Firm", id: 4160971388 }
   }
 });
 
-// Connect everything together
 computed(() =>
-  model.person.full = model.person.first + " " + model.person.last;
-); // Depends on model.person.first and model.person.last
-computed(() =>
-  model.length = model.person.first.length
-); // Depends on model.person.first
-computed(() =>
-  model.fullLength = model.person.full.length
-); // Depends on model.person.last
+  console.log("" + evenSummary.description)
+); // Output "Will be meeting with the president of BigImportantFirmCo to talk business"
 
-// And display the person's full name on the page!
-computed(() => {
-  document.getElementById("name").innerText = model.person.full;
-});
-
-// Change "John Smith" to "Matt Smith", this update is synchronous and will
-// recalculate the full name, both lengths, and will then update the page all in
-// one go!
-model.person.first = "Matt";
-
-// You can even completely replace the object, Luar will automatically observe
-// any objects set onto reactive properties
-model.person = { first: "Lua", last: "MacDougall", full: "" };
-// Now it shows my name! Even replacing the object is handled gracefully
-```
-
-### Error handling
-Any errors generated by computed functions will be forwarded to the statement that generated them.
-```javascript
-// This statement throws "Oops!"
-computed(() => {
-  throw new Error("Oops!");
-});
-
-const nums = observe({ x: 10, y: 20 });
-
-// Cause a kerfuffle if x > 30
-computed(() => {
-  if (nums.x > 30) {
-    throw new Error("OnO!");
+eventSummary.description = {
+  short: "Will be meeting with the president of ...",
+  full: "Will be meeting with the president of BigImportantFirmCo to talk business.\nMake sure to arrive by 11:30!",
+  toString() {
+    return this.full;
   }
-});
+}; // Output "Will be meeting with the president of BigImportantFirmCo to talk business.\nMake sure to arrive by 11:30!"
 
-// Totally fine
-nums.x = 20;
+eventSummary.summary = eventSummary;
 
-// This statement throws "OnO!"
-nums.x += 15;
-// Note that the value is changed even if the computed function(s) throw, so x
-// has been updated to 35 anyway
+eventSummary.summary.summary.description.full += "\n(remember to show off how cool reactivity is)";
+// Output ... business.\nMake sure to arrive by 11:30!\n(remember to show off how cool reactivity is)"
 ```
 
-### Common pitfalls
-Note that it is possible to create two or more computed functions that can infinitely trigger eachother, which will cause an error.
 ```javascript
-const nums = observe({ x: 10, y: 20 });
+// Create some data, note that this data is not reactive!
+const someData = {
+  m: 33,
+  x: null,
+  y: { a: true, b: false }
+};
 
-computed(() => {
-  nums.a; // This makes nums.a a dependency
-  nums.b++; // Update nums.b
+// And make some more data that *is* reactive
+const model = observe({
+  title: "Crucial Information",
+  color: "red",
+  data: null
 });
 
-// Throws "Maximum computed task length exceeded (stack overflow!)"
-// (plus much more information)
-computed(() => {
-  nums.b; // This makes nums.b a dependency
-  nums.a++; // Update nums.a
-});
+// But oh no! We added the non-reactive data into a reactive object!
+// This makes it implicitly reactive, now all of someData's properties and sub-objects are all reactive
+model.data = someData;
+
+// Let's use that reactivity and listen on someData.m
+computed(() => console.log(someData.m)); // Output "33"
+
+// Look, reactive!!
+model.data.m++; // Output "34"
+someData.m++; // Output "35"
 ```
-Also remember that arrays are not reactive:
+
+### 4. Cleaning up
 ```javascript
-const obj = observe({ arr: [1, 2, 3, 4] });
+// To demonstrate how computed tasks and reactive objects are garbage collected, lets create some!
 
-computed(() => {
-  console.log(obj.arr);
-  times++;
-});
+{
+  const thing = observe({ hi: "Hello, world" });
+  // `thing` now exists
 
-// Not reactive!
-obj.arr[0] = 0;
+  {
+    computed(() => console.log(thing.hi)); // Output "Hello, world"
+    // `thing.hi` now has a computed task depending on it
 
-// Not reactive! (Luar does not modify array methods to make them reactive)
+    thing.hi += "!"; // Output "Hello, world!"
+  }
+  // `thing` and `thing.hi`'s computed task still exist
+
+  thing.hi += "!!"; // Output "Hello, world!!"
+}
+// `thing` has gone out of scope!
+// Both `thing` and `thing.hi`'s computed task get garbage collected.
+```
+
+### 5. Reactivity pitfalls
+
+arrays
+```javascript
+const obj = { arr: [1, 2, 3] };
+observe(obj);
+
+computed(() => console.log(obj.arr)); // Output "1,2,3"
+
+obj.arr[2] = 4; // No output, arrays are not reactive!
+obj.arr.push(5); // Still no output, as this library does not replace array methods
+
+// If you want to use arrays, do it like this:
+// 1. Run your operations
+obj.arr[2] = 3;
+obj.arr[3] = 4;
 obj.arr.push(5);
-
-// There we go! This works because this changes the actual value we depend
-// on instead of the contents of the value
-obj.arr = obj.arr;
+// 2. Then set the array to itself
+obj.arr = obj.arr; // Output "1,2,3,4,5"
 ```
 
-### More edge cases and features
-I recommend you read through the [index.test.js](index.test.js) file, which contains tests for every little feature/edge case/reactivity pitfall. It should really help you understand how this library works, especially the last section.
+added
+```javascript
+const obj = { y: 20 };
+observe(obj);
+
+obj.x = 10;
+
+computed(() => console.log(obj.x)); // Output "10"
+computed(() => console.log(obj.y)); // Output "20"
+
+obj.y += 2; // Output "22"
+
+obj.x += 2; // No output, as this property was added after observation
+
+observe(obj);
+
+obj.x += 2; // Still no output, as objects cannot be re-observed
+```
+
+proto
+```javascript
+const objPrototype = {
+  x: 10
+};
+const obj = {
+  y: 20
+};
+Object.setPrototypeOf(obj, objPrototype);
+
+observe(obj);
+
+computed(() => console.log(obj.x)); // Output "10"
+computed(() => console.log(obj.y)); // Output "20"
+
+obj.y = 21; // Output "21"
+
+obj.x = 11; // No output, as this isn't an actual property of `obj`
+objPrototype.x = 12; // No output, as prototypes are not reactive
+```
+
+non-enumerable and non-configurable
+```javascript
+const obj = {
+  z: 30
+};
+Object.defineProperty(obj, "x", {
+  enumerable: false,
+  value: 10
+});
+Object.defineProperty(obj, "y", {
+  configurable: false,
+  value: 20
+});
+
+observe(obj);
+
+computed(() => console.log(obj.x)); // Output "10"
+computed(() => console.log(obj.y)); // Output "20"
+computed(() => console.log(obj.z)); // Output "30"
+
+obj.z++; // Output "31"
+
+obj.x++; // No output as this property is non-enumerable
+obj.y++; // No output as this property is non-configurable
+```
 
 ## Authors
 Made with ❤ by Lua MacDougall ([lua.wtf](https://lua.wtf/))
