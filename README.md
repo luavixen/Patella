@@ -50,7 +50,7 @@ On that note, let's use Luar to make a reactive webpage that says hello to a use
 ```
 Now the `hello-message` header will say hello to the user, updating its content as soon as the model changes (on input)!
 This is known as "declarative UI", where you declare the content of your UI and how it connects to your data, and the UI updates \~reactively\~.
-You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/).
+You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/latest).
 
 ## Installation
 Luar is available on [NPM](https://www.npmjs.com/package/luar):
