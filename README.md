@@ -77,9 +77,11 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
  - [5. Reactivity pitfalls](#5-reactivity-pitfalls)
 
 ### 1. Basic reactivity
+JavaScript is an imperative programming language, so if we evaluate the expression `z = x + y` and then change `y` or `x` to different numbers, `z`'s value does not update and remains out-of-date until we evaluate another expression that updates `z`.
+An example, in normal JavaScript:
 ```javascript
 let coords = { x: 10, y: 20 };
-let z = x + y;
+let z = coords.x + coords.y;
 
 console.log(z); // Output: "30" ✔
 
@@ -89,9 +91,12 @@ coords.y = 21;
 console.log(z); // Output: "30" ✘
 ```
 
+In a reactive environment, the expression `z = x + y` is a "declaration" that `z` will be the sum of `x` and `y`.
+The "declaration" part means that if `y` or `x` changes, so does `z`!
+This example uses Luar's observe and computed functions to "declare" that `z = x + y` using a computed task.
 ```javascript
 let coords = observe({ x: 10, y: 20 });
-let z; computed(() => z = x + y);
+let z; computed(() => z = coords.x + coords.y);
 
 console.log(z); // Output: "30" ✔
 
@@ -100,6 +105,8 @@ coords.y = 21;
 
 console.log(z); // Output: "41" ✔
 ```
+As you can see, this code uses a computed task that sets `z` to the result of `coords.x + coords.y`.
+The task will be re-run whenever `coords.x` or `coords.y` changes.
 
 ### 2. Multiple objects and computed properties
 ```javascript
