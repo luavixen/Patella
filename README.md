@@ -106,9 +106,11 @@ coords.y = 21;
 console.log(z); // Output: "41" ✔
 ```
 As you can see, this code uses a computed task that sets `z` to the result of `coords.x + coords.y`.
-The task will be re-run whenever `coords.x` or `coords.y` changes.
+The task will be re-run whenever `coords.x` or `coords.y` changes, meaning that `z` will stay up-to-date with the values in the `coords` object!
 
 ### 2. Multiple objects and computed properties
+In this example we create a computed task that depends on multiple properties and sub-properties of multiple objects.
+Notice the use of a sub-object which is implicitly reactive and even swapping out sub-objects with new ones.
 ```javascript
 // Setting up some reactive objects that contain some data about a specific US president ...
 const person = observe({
@@ -125,10 +127,10 @@ computed(() => console.log(
   `${person.name.first}'s username is ${account.user} (${person.age} years old)`
 )); // Output "George's username is big-george12 (288 years old)"
 
-// Update one of the dependents
+// Changing reactive properties will only run computed tasks that depend on them
 account.password = "not-telling"; // Does not output (no computed task depends on this)
 
-// All operators work
+// All operators work when updating properties
 account.user += "3"; // Output "George's username is big-george123 (288 years old)"
 person.age++; // Output "George's username is big-george123 (289 years old)"
 
@@ -140,6 +142,9 @@ person.name = {
 }; // Output "Abraham's username is big-george123 (289 years old)"
 ```
 
+You can also link up multiple computed tasks which will be run as one "task".
+Computed tasks will trigger other computed tasks if they change values that have dependencies, even able to trigger multiple other tasks at once!
+The only restriction is that a computed task cannot trigger itself, as that would always result in an infinite loop.
 ```javascript
 // Create our nums object, with some default values for properties that will be computed
 const nums = observe({
@@ -170,6 +175,9 @@ console.log(nums.sumAllSums); // Output "459"
 ```
 
 ### 3. Deep reactivity and implicit observation
+Computed tasks can reference properties at any arbitrary depth in a reactive object and will update if any of the objects in the chain are changed.
+Everything works as expected, even circular references.
+Note the use of `toString()`, when executed it will automatically add `eventSummary.description.full` as another dependency of the computed task.
 ```javascript
 const eventSummary = observe({
   title: "Important Meeting #283954",
@@ -182,7 +190,7 @@ const eventSummary = observe({
 });
 
 computed(() =>
-  console.log("" + evenSummary.description)
+  console.log("" + eventSummary.description)
 ); // Output "Will be meeting with the president of BigImportantFirmCo to talk business"
 
 eventSummary.description = {
@@ -193,12 +201,17 @@ eventSummary.description = {
   }
 }; // Output "Will be meeting with the president of BigImportantFirmCo to talk business.\nMake sure to arrive by 11:30!"
 
+// Circular reactive references!
 eventSummary.summary = eventSummary;
 
-eventSummary.summary.summary.description.full += "\n(remember to show off how cool reactivity is)";
+eventSummary.summary.summary.summary.summary.summary.description.full +=
+  "\n(remember to show off how cool reactivity is)";
 // Output ... business.\nMake sure to arrive by 11:30!\n(remember to show off how cool reactivity is)"
 ```
 
+Another example of implicit observation of objects.
+Any non-reactive objects set onto reactive objects will be "infected" and become reactive-capable as well, even if they are removed from the reactive object later.
+Protip: you can check if an object is reactive by checking for the existence of the `__luar` property (`if (obj.__luar) {}`).
 ```javascript
 // Create some data, note that this data is not reactive!
 const someData = {
@@ -227,6 +240,9 @@ someData.m++; // Output "35"
 ```
 
 ### 4. Cleaning up
+Unlike other reactivity libraries, there is no way to "clean up" Luar's reactivity functionality.
+Observing an object is a non-reversible operation and there is no way to remove/detach computed tasks.
+Additionally, there is no global scope or other nonsense, just let things go out of scope:
 ```javascript
 // To demonstrate how computed tasks and reactive objects are garbage collected, lets create some!
 
@@ -249,8 +265,28 @@ someData.m++; // Output "35"
 ```
 
 ### 5. Reactivity pitfalls
+Luar isn't perfect and hacking reactivity into a language like JavaScript is not very elegant.
+This section presents a comprehensive list of cases where errors are generated or properties aren't reactive.
 
-arrays
+*Computed tasks can trigger each other in infinite loops:*
+```javascript
+const obj = { x: 10, y: 20 };
+observe(obj);
+
+// This task depends on x and updates y if x > 20
+computed(() => {
+  if (obj.x > 20) obj.y++;
+});
+// This task depends on y and updates x if y > 20
+computed(() => {
+  if (obj.y > 20) obj.x++;
+});
+
+// Since both tasks depend on each other, bad things can happen
+obj.x += 11; // Uncaught Error: [Luar] ERR Maximum computed task length exceeded (stack overflow!)
+```
+
+*Unlike other reactivity libraries which mangle arrays, Luar does not hack reactivity into arrays:*
 ```javascript
 const obj = { arr: [1, 2, 3] };
 observe(obj);
@@ -269,7 +305,7 @@ obj.arr.push(5);
 obj.arr = obj.arr; // Output "1,2,3,4,5"
 ```
 
-added
+*Properties added after observation are not reactive:*
 ```javascript
 const obj = { y: 20 };
 observe(obj);
@@ -288,7 +324,7 @@ observe(obj);
 obj.x += 2; // Still no output, as objects cannot be re-observed
 ```
 
-proto
+*Properties on a reactive object's prototype are not reactive:*
 ```javascript
 const objPrototype = {
   x: 10
@@ -309,7 +345,7 @@ obj.x = 11; // No output, as this isn't an actual property of `obj`
 objPrototype.x = 12; // No output, as prototypes are not reactive
 ```
 
-non-enumerable and non-configurable
+*Properties defined as non-enumerable or non-configurable cannot be made reactive:*
 ```javascript
 const obj = {
   z: 30
