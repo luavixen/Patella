@@ -22,7 +22,7 @@
 <h2 align="center">Luar &#x1F501;</h2>
 <p align="center"><i>
   Luar provides unctions for facilitating simple <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
-  Luar is compatible with ECMAScript 5 (2009) and up and functions without issue on Internet Explorer 8 and newer.
+  Luar is compatible with ECMAScript 5 (2009) and up and functions without issue on Internet Explorer 9 and newer.
 </i></p>
 
 ## Description
