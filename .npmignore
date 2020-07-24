@@ -1,6 +1,8 @@
 .nyc_output
 coverage
 
+.github
+
 .editorconfig
 .gitignore
 
