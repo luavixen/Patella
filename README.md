@@ -27,7 +27,7 @@
 
 ## Description
 Luar is a simple and concise implementation of the reactive programming paradigm for JavaScript (with included TypeScript support).
-It is compatible with almost any browser released since 2010 and is also very small, weighing at around 800 bytes when minified and gzipped, it only contains about 300 lines of code.
+It is compatible with almost any browser released in the last 10 years and is also very small, weighing at around 800 bytes when minified and gzipped, it only contains about 300 lines of code.
 
 Luar provides functions for "observing" JavaScript objects and for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects.
 When the data in an observed object updates, any computed tasks that depend on that data are re-run.
@@ -369,6 +369,18 @@ obj.z++; // Output "31"
 
 obj.x++; // No output as this property is non-enumerable
 obj.y++; // No output as this property is non-configurable
+```
+
+*The "\_\_proto\_\_" property will never be made reactive:*
+```javascript
+const obj = {};
+Object.defineProperty(obj, "__proto__", { value: 10 });
+
+observe(obj);
+
+computed(() => console.log(obj.__proto__)); // Output "10"
+
+obj.__proto__++; // No output as properties named __proto__ are ignored
 ```
 
 ## Authors

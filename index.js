@@ -143,7 +143,7 @@ var Luar = (function () {
     var shadow = {};
 
     // List of dependant computed tasks (stored as { [key]: task[] })
-    var dependencyMap = {};
+    var dependencyMap = Object.create(null);
     // Get a value from a key and update dependencies if we are currently in a
     // computed task
     function reactiveGet(key) {
@@ -217,7 +217,7 @@ var Luar = (function () {
     // Loop over the keys of the object and make any keys that are actually part
     // of the object reactive
     for (var key in obj) {
-      if (!hasOwnProperty(obj, key)) continue;
+      if (!hasOwnProperty(obj, key) || key === "__proto__") continue;
       reactiveCreate(key);
     }
 

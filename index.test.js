@@ -554,3 +554,67 @@ describe("reactivity edge cases", () => {
   });
 
 });
+
+describe("prototype nonsense", () => {
+
+  it("updating reactive properties that share their name with any property of Object.prototype does not throw an error", () => {
+    // Create and reactify an object with a property that has the same name as
+    // any property present on Object
+    const obj = observe({
+      hasOwnProperty: 10
+    });
+
+    // Then attach a computed property that depends on it
+    let times = 0;
+    computed(() => {
+      obj.hasOwnProperty;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Then try and update it
+    obj.hasOwnProperty++; // Due to the
+                          // dependencyMap.__proto__ === Object.prototype, this
+                          // line will crash Luar versions >=1.1.0 with a
+                          // cryptic error message
+    assert.strictEqual(times, 2);
+  });
+
+  it("properties named __proto__ are ignored by observe", () => {
+    // Create a new object with a __proto__ property
+    const obj = Object.create(null);
+    Object.defineProperty(obj, "__proto__", {
+      value: 10
+    });
+
+    // Check that __proto__ was correctly set
+    const overriddenPrototype = obj.__proto__;
+    const actualPrototype = Object.getPrototypeOf(obj);
+    assert.strictEqual(overriddenPrototype, 10);
+    assert.strictEqual(actualPrototype, null);
+
+    // Get the current __proto__ descriptor
+    const getDescriptor = () => Object.assign({}, Object.getOwnPropertyDescriptor(obj, "__proto__"));
+    const originalDescriptor = getDescriptor();
+
+    // Reactify the object
+    observe(obj);
+
+    // Check that the __proto__ descriptor was left unchanged
+    const observedDescriptor = getDescriptor();
+    assert.deepEqual(originalDescriptor, observedDescriptor);
+
+    // Attempt to attach a computed property to __proto__
+    let times = 0;
+    computed(() => {
+      obj.__proto__;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Not reactive!
+    obj.__proto__++;
+    assert.strictEqual(times, 1);
+  });
+
+});
