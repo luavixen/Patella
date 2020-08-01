@@ -270,7 +270,7 @@ var Luar = (function () {
   // For environments that use CommonJS modules, export the observe() and
   // computed() functions
   /* istanbul ignore else */
-  if (isObject(exports)) {
+  if (typeof exports === "object") {
     exports.observe = observe;
     exports.computed = computed;
   }
