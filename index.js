@@ -126,8 +126,8 @@ var Luar = (function () {
   // Hint property to add to observed objects, so that they don't get observed
   // again
   var observeHint = "__luar";
-  // Internal observe, known good params
-  function observe(obj) {
+  // Internal observe, the obj parameter must be a valid object
+  function observeObject(obj) {
     // Don't observe it if it has the hint
     if (hasOwnProperty(obj, observeHint)) return;
     // Define the hint on this object and make it non-enumerable (done before
@@ -172,7 +172,7 @@ var Luar = (function () {
     function reactiveSet(key, val) {
       // Make the value reactive if it is an object
       if (isObject(val)) {
-        observe(val);
+        observeObject(val);
       }
 
       // Update the key
@@ -228,7 +228,7 @@ var Luar = (function () {
   }
 
   // [Export] Make a JavaScript object reactive
-  function _observe(obj) {
+  function observe(obj) {
     // Since this is an export, typecheck its arguments
     if (!isObject(obj)) {
       throw new Error(makeErrorMessage(
@@ -238,11 +238,11 @@ var Luar = (function () {
     }
 
     // Call internal observe
-    return observe(obj);
+    return observeObject(obj);
   }
   // [Export] Execute a function as a computed task and record its dependencies.
   // The task will then be re-run whenever its dependencies change.
-  function _computed(fn) {
+  function computed(fn) {
     // Since this is an export, typecheck its arguments
     if (!isFunction(fn)) {
       throw new Error(makeErrorMessage(
@@ -254,7 +254,7 @@ var Luar = (function () {
     // Also emit a warning if the user is creating a computed task from within
     // another computed task, as this can lead to duplicate tasks being
     // registered when the offender is re-run when its dependencies change
-    if (computedTasks.length !== 0) {
+    if (computedTasks.length) {
       console.warn(makeErrorMessage(
         "Creating computed functions from within another computed function is not recommended",
         "Offending computed function: " + getFnName(computedTasks[computedI]) +
@@ -270,12 +270,12 @@ var Luar = (function () {
   // For environments that use CommonJS modules, export the observe() and
   // computed() functions
   /* istanbul ignore else */
-  if (typeof exports === "object") {
-    exports.observe = _observe;
-    exports.computed = _computed;
+  if (isObject(exports)) {
+    exports.observe = observe;
+    exports.computed = computed;
   }
 
   // For other environments, return both functions which will be put into the
   // global "Luar"
-  return { observe: _observe, computed: _computed };
+  return { observe: observe, computed: computed };
 })();

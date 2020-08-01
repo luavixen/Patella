@@ -1,6 +1,6 @@
 {
   "name": "luar",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Luar is a library for facilitating extremely simple Reactive Programming in JavaScript, inspired by Vue.js and Hyperactiv.",
   "author": "Lua MacDougall <luawhat@gmail.com> (https://lua.wtf/)",
   "license": "MIT",
