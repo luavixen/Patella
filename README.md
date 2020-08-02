@@ -27,7 +27,7 @@
 
 ## Description
 Luar is a simple and concise implementation of the reactive programming paradigm for JavaScript (with included TypeScript support).
-It is compatible with almost any browser released in the last 10 years and is also very small, weighing at around 800 bytes when minified and gzipped, it only contains about 300 lines of code.
+It is compatible with almost any browser released in the last 10 years and is also very small, weighing at around 1 kilobyte when minified and gzipped, it only contains about 300 lines of code.
 
 Luar provides functions for "observing" JavaScript objects and for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects.
 When the data in an observed object updates, any computed tasks that depend on that data are re-run.

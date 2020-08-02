@@ -57,6 +57,21 @@ var Luar = (function () {
     );
   }
 
+  // Hint property to add to observed objects, so that they don't get observed
+  // again
+  var observeHint = "__luar";
+  // Hint property to add to computed tasks, indicating that they shouldn't be
+  // called again and should be removed from dependencies
+  var disposeHint = "__disposed";
+  // Define a hint property on an object/function
+  function defineHint(obj, hint) {
+    Object.defineProperty(obj, hint, {
+      enumerable: false,
+      configurable: false,
+      value: true
+    });
+  }
+
   // Maximum number of tasks to execute in a single task cycle
   var computedTaskLimit = 2000;
   // Task function list (and current index into said list)
@@ -93,8 +108,12 @@ var Luar = (function () {
     try {
       // Go through and execute all the computed tasks
       for (; computedI < computedTasks.length; computedI++) {
-        // Call this task
-        computedTasks[computedI]();
+        // Get the task to execute
+        var task = computedTasks[computedI];
+        // Execute it if it has not been disposed
+        if (!hasOwnProperty(task, disposeHint)) {
+          task();
+        }
         // Check for overflow
         if (computedI > computedTaskLimit) {
           computedOverflow();
@@ -123,20 +142,12 @@ var Luar = (function () {
     computedProcess();
   }
 
-  // Hint property to add to observed objects, so that they don't get observed
-  // again
-  var observeHint = "__luar";
   // Internal observe, the obj parameter must be a valid object
   function observeObject(obj) {
     // Don't observe it if it has the hint
     if (hasOwnProperty(obj, observeHint)) return;
-    // Define the hint on this object and make it non-enumerable (done before
-    // creating the object to allow for cyclic references)
-    Object.defineProperty(obj, observeHint, {
-      enumerable: false,
-      configurable: false,
-      value: true
-    });
+    // Define the hint on this object
+    defineHint(obj, observeHint);
 
     // The shadow object contains the actual values modified/returned by the
     // getters and setters
@@ -183,9 +194,19 @@ var Luar = (function () {
       // Return if there are no dependencies
       if (!deps) return;
 
-      // Notify all the dependencies
+      // Notify all the dependencies (and remove disposed dependencies since
+      // we're already iterating)
       for (var i = 0; i < deps.length; i++) {
-        computedNotify(deps[i]);
+        // Get the dependency
+        var fn = deps[i];
+        if (!fn) continue;
+
+        // Notify it if it isn't disposed, or remove it from the array if it is
+        if (hasOwnProperty(fn, disposeHint)) {
+          deps[i] = null;
+        } else {
+          computedNotify(fn);
+        }
       }
     }
 
@@ -265,6 +286,34 @@ var Luar = (function () {
 
     // "Notify" this new computed task to register it in all of its dependencies
     computedNotify(fn);
+    // Return the now-registered function
+    return fn;
+  }
+  // [Export] Mark a "computed task" function as "disposed" which will prevent
+  // it from being run again and will remove it from observed objects (omit fn
+  // to dispose of the current computed task)
+  function dispose(fn) {
+    // If "fn" is null or undefined, use the current computed task instead
+    if (fn == null) {
+      if (computedTasks.length) {
+        fn = computedTasks[computedI];
+      } else {
+        throw new Error(makeErrorMessage(
+          "Attempted to dispose of current computed task while no computed task is running",
+          "dispose(fn) was called without \"fn\" but there is currently no executing computed task to dispose of"
+        ));
+      }
+    }
+    // Or typecheck "fn"
+    else if (!isFunction(fn)) {
+      throw new Error(makeErrorMessage(
+        "Attempted to dispose of a value that is not a function",
+        "dispose(fn) expects \"fn\" to be a function, got \"" + fn + "\""
+      ));
+    }
+
+    // Mark "fn" as disposed
+    defineHint(fn, disposeHint);
   }
 
   // For environments that use CommonJS modules, export the observe() and
@@ -273,9 +322,10 @@ var Luar = (function () {
   if (typeof exports === "object") {
     exports.observe = observe;
     exports.computed = computed;
+    exports.dispose = dispose;
   }
 
   // For other environments, return both functions which will be put into the
   // global "Luar"
-  return { observe: observe, computed: computed };
+  return { observe: observe, computed: computed, dispose: dispose };
 })();
