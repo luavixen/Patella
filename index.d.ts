@@ -7,7 +7,7 @@ export declare function observe<T extends object>(obj: T): T;
 
 /**
  * Execute a function as a computed task and record its dependencies. The task
- * will then be re-run whenever its dependencies change.
+ * will then be re-run whenever its dependencies change
  * @param {function} fn Function to run and register as a computed task
  * @return {function} The now-registered computed task function
  */

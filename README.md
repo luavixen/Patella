@@ -29,7 +29,7 @@
 Luar is a simple and concise implementation of the reactive programming paradigm for JavaScript (with included TypeScript support).
 It is compatible with almost any browser released in the last 10 years and is also very small, weighing at around 1 kilobyte when minified and gzipped, it only contains about 300 lines of code.
 
-Luar provides functions for "observing" JavaScript objects and for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects.
+Luar provides functions for "observing" JavaScript objects, for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects, and for removing "computed" functions so that they are no longer executed.
 When the data in an observed object updates, any computed tasks that depend on that data are re-run.
 I find this functionality most useful for MVC (Model-View-Controller) style declarative UI creation!
 
@@ -52,6 +52,20 @@ Now the `hello-message` header will say hello to the user, updating its content 
 This is known as "declarative UI", where you declare the content of your UI and how it connects to your data, and the UI updates \~reactively\~.
 You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/latest).
 
+Oh and here is the API's type definitions, laid bare for your eyes to gaze:
+```typescript
+/** Make a JavaScript object reactive */
+function observe<T extends object>(obj: T): T;
+
+/** Execute a function as a computed task and record its dependencies. The task
+ * will then be re-run whenever its dependencies change */
+function computed<T extends () => void>(fn: T): T;
+
+/** Mark a function as "disposed" which will prevent it from being run as a
+ * computed task and remove it from the dependencies of reactive objects */
+function dispose(fn?: (() => void) | null): void;
+```
+
 ## Installation
 Luar is available on [NPM](https://www.npmjs.com/package/luar):
 ```sh
@@ -66,6 +80,7 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
 <script>
   Luar.observe({});
   Luar.computed(function () {});
+  Luar.dispose(function () {});
 </script>
 ```
 
@@ -240,9 +255,10 @@ someData.m++; // Output "35"
 ```
 
 ### 4. Cleaning up
-Unlike other reactivity libraries, there is no way to "clean up" Luar's reactivity functionality.
-Observing an object is a non-reversible operation and there is no way to remove/detach computed tasks.
-Additionally, there is no global scope or other nonsense, just let things go out of scope:
+Luar provides the `dispose(fn)` function for destroying computed tasks, but there is currently no way to de-reactify an object.
+Observing an object is a non-reversible operation, but you could create a clone of the reactive object (which would not be reactive) like `nonReactiveObj = { ...reactiveObj }`.
+
+Without the usage of `dispose(fn)`, Luar reactive objects and computed tasks still get garbage collected when they go entirely out of scope:
 ```javascript
 // To demonstrate how computed tasks and reactive objects are garbage collected, lets create some!
 
@@ -258,10 +274,26 @@ Additionally, there is no global scope or other nonsense, just let things go out
   }
   // `thing` and `thing.hi`'s computed task still exist
 
-  thing.hi += "!!"; // Output "Hello, world!!"
+  thing.hi += "!"; // Output "Hello, world!!"
 }
 // `thing` has gone out of scope!
 // Both `thing` and `thing.hi`'s computed task get garbage collected.
+```
+
+Now let's incorporate some early computed task removal!
+```javascript
+// Create the thing
+const thing = observe({ hi: "Hello, world" });
+
+// Attach our shiny new task
+const task = computed(() => console.log(thing.hi)); // Output "Hello, world"
+
+thing.hi += "!"; // Output "Hello, world!"
+
+// Now dispose of the task!
+dispose(task);
+
+thing.hi += "!"; // No output, since the computed task is gone (and garbage collected)
 ```
 
 ### 5. Reactivity pitfalls
