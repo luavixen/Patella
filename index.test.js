@@ -2,7 +2,7 @@
 const { assert } = require("chai");
 
 // Get the Luar functions
-const { observe, computed } = require(".");
+const { observe, computed, dispose } = require(".");
 
 // Function for making a basic object containing primitives
 const makeObj = () =>
@@ -52,6 +52,27 @@ describe("api safety", () => {
     assert.throws(() => computed(),     err);
     assert.throws(() => computed(null), err);
     assert.throws(() => computed({}),   err);
+  });
+
+  it("dispose is a function that takes one argument", () => {
+    assert.typeOf(dispose, "function");
+    assert.lengthOf(dispose, 1);
+  });
+
+  it("dispose fails if its argument is not a function and not null/undefined", () => {
+    const err =
+      "Attempted to dispose of a value that is not a function";
+    assert.throws(() => dispose(10),    err);
+    assert.throws(() => dispose("fn"),  err);
+    assert.throws(() => dispose({}),    err);
+  });
+
+  it("dispose fails if its argument is null/undefined and not being run in a computed function", () => {
+    const err =
+      "Attempted to dispose of current computed task while no computed task is running";
+    assert.throws(() => dispose(),          err);
+    assert.throws(() => dispose(null),      err);
+    assert.throws(() => dispose(undefined), err);
   });
 
 });
@@ -127,14 +148,21 @@ describe("observed object correctness", () => {
 // Test computed tasks and their interactions with objects and eachother
 describe("computed task functionality", () => {
 
-  it("computed functions are called when they are created", () => {
+  it("computed task functions are called when they are created", () => {
     let times = 0;
     computed(() => times++);
 
     assert.strictEqual(times, 1);
   });
 
-  it("computed functions are called when their dependencies update", () => {
+  it("computed returns the task function passed to it", () => {
+    const fn1 = () => {};
+    const fn2 = computed(fn1);
+
+    assert.strictEqual(fn1, fn2);
+  });
+
+  it("computed tasks are called when their dependencies update", () => {
     const obj = makeObserved();
 
     let times = 0;
@@ -159,7 +187,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(times, 3);
   });
 
-  it("computed functions can depend on multiple objects", () => {
+  it("computed tasks can depend on multiple objects", () => {
     const obj1 = makeObserved(), obj2 = makeObserved(), obj3 = makeObserved();
 
     let times = 0, value = null;
@@ -194,7 +222,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(value, 32);
   });
 
-  it("computed functions will trigger updates in eachother", () => {
+  it("computed tasks will trigger updates in eachother", () => {
     const obj = makeObserved();
 
     // Depends on a
@@ -227,7 +255,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(times2, 3);
   });
 
-  it("computed functions will fail if they infinitely depend on eachother", () => {
+  it("computed tasks will fail if they infinitely depend on eachother", () => {
     const obj = makeObserved();
 
     // Depends on a, sets b
@@ -253,18 +281,18 @@ describe("computed task functionality", () => {
     assert.operator(times2, ">", 100);
   });
 
-  it("computed functions can be force-notified by re-computing them", () => {
+  it("computed tasks can be force-notified by re-computing them", () => {
     const obj = makeObserved();
 
     // Create a computed task that moves a value
     let times = 0;
-    function exampleComputedTask() {
+    const fn = () => {
       obj.b = obj.a;
       times++;
     }
 
     // Register it, which will run it once
-    computed(exampleComputedTask);
+    computed(fn);
     assert.strictEqual(times, 1);
 
     // Update its dependencies, which brings the count to 2
@@ -272,7 +300,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(times, 2);
 
     // Now re-register it! This will just notify it and is completely safe
-    computed(exampleComputedTask);
+    computed(fn);
     assert.strictEqual(times, 3);
 
     // Update its dependencies again, which will only trigger it once and not
@@ -281,7 +309,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(times, 4);
   });
 
-  it("computed functions will generate warnings if created/notified from within another computed function", () => {
+  it("computed tasks will generate warnings if created/notified from within another computed task", () => {
     const obj = makeObserved();
 
     const oldConsoleWarn = console.warn;
@@ -290,24 +318,23 @@ describe("computed task functionality", () => {
     let warningMessage;
     console.warn = (...args) => void (warningMessage = args.join(" "));
 
-    function makeSomeComputedTasks() {
+    const fn = () => {
       // ... bla bla bla update array
       obj.f[2] = 44;
       // ... notify array dependencies
       obj.f = obj.f;
       // ... bla bla bla
       computed(() => {
-        // Creating (and even manually notifying) computed functions from within
-        // other computed functions is bad practice as it can potentially
-        // create new tasks every time the the original computed function is
-        // called which will stack up and do bad things that the user does not
-        // expect
+        // Creating (and even manually notifying) computed tasks from within
+        // other computed tasks is bad practice as it can potentially create new
+        // tasks every time the the original computed task is called which will
+        // stack up and do bad things that the user does not expect
       });
     }
 
     // Oops! Accidentally running a function that creates computed tasks as a
     // computed task? That's no good!
-    computed(makeSomeComputedTasks);
+    computed(fn);
 
     console.warn = oldConsoleWarn;
 
@@ -316,7 +343,7 @@ describe("computed task functionality", () => {
     );
   });
 
-  it("computed functions will propagate errors to where they get triggered", () => {
+  it("computed tasks will propagate errors to where they get triggered", () => {
     const obj = makeObserved();
 
     // Generates an error if obj.a is set to a value above 30
@@ -331,6 +358,177 @@ describe("computed task functionality", () => {
 
     // Note that the value will still change
     assert.strictEqual(obj.a, 31);
+  });
+
+});
+
+// Test disposal of computed tasks, ensuring they get removed and are not run
+// again
+describe("dispose functionality", () => {
+
+  it("computed tasks are removed from dependencies when disposed", () => {
+    const obj = makeObserved();
+
+    let times = 0;
+    const fn = computed(() => {
+      obj.a;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Reactive before dispose
+    obj.a += 10;
+    assert.strictEqual(times, 2);
+
+    dispose(fn);
+
+    // Non-reactive after dispose
+    obj.a += 10;
+    assert.strictEqual(times, 2);
+  });
+
+  it("only disposed computed tasks are removed from dependencies when disposed", () => {
+    const obj = makeObserved();
+
+    // Create 3 computed tasks that all depend on obj.a
+    let fn1, fn2, fn3;
+    let times1 = 0, times2 = 0, times3 = 0;
+    fn1 = computed(() => { obj.c = obj.a * 2; times1++ });
+    fn2 = computed(() => { obj.c = obj.a * 3; times2++ });
+    fn3 = computed(() => { obj.c = obj.a * 4; times3++ });
+
+    // All of them should have been run once
+    assert.strictEqual(times1, 1);
+    assert.strictEqual(times2, 1);
+    assert.strictEqual(times3, 1);
+
+    // And they will all run again
+    obj.a++;
+    assert.strictEqual(times1, 2);
+    assert.strictEqual(times2, 2);
+    assert.strictEqual(times3, 2);
+
+    // Dispose of the 2nd function
+    dispose(fn2);
+
+    // Now the 2nd function gets removed
+    obj.a++;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 2);
+    assert.strictEqual(times3, 3);
+
+    // Dispose of the 1st function
+    dispose(fn1);
+
+    // Now the 1st function also stops working
+    obj.a++;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 2);
+    assert.strictEqual(times3, 4);
+
+    // Dispose of the last function
+    dispose(fn3);
+
+    // No more reactivity!
+    obj.a++;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 2);
+    assert.strictEqual(times3, 4);
+  });
+
+  it("the current computed task is disposed if dispose(fn) is called without \"fn\"", () => {
+    const obj = makeObserved();
+
+    // Register computed task that increments times but disposes itself if obj.a > 30
+    let times = 0;
+    computed(() => {
+      if (obj.a > 30) {
+        dispose();
+      }
+      times++;
+    });
+    // Ran immediately
+    assert.strictEqual(times, 1);
+
+    // Works fine if obj.a <= 30
+    obj.a = 20;
+    assert.strictEqual(times, 2);
+
+    // Runs, realizes obj.a > 30, disposes
+    obj.a = 35;
+    assert.strictEqual(times, 3);
+
+    // Does not run anymore
+    obj.a = 36;
+    assert.strictEqual(times, 3);
+  });
+
+  it("functions that have been disposed cannot be run as computed tasks", () => {
+    // Create a new function that increments times
+    let times = 0;
+    const fn = () => {
+      times++;
+    };
+
+    // Dispose the function
+    dispose(fn);
+    // Attempt to register it
+    computed(fn);
+
+    // Computed ignores the function
+    assert.strictEqual(times, 0);
+  });
+
+  it("if a computed task triggers another computed task, but then disposes of the other computed task, the other computed task will not be run", () => {
+    const obj = makeObserved();
+
+    // Task #1
+    let times1 = 0;
+    const fn1 = computed(() => {
+      obj.b;
+      times1++;
+    });
+
+    assert.strictEqual(times1, 1);
+
+    // Task #2 (updates #1, disposes of #1 if obj.a > 50)
+    let times2 = 0;
+    const fn2 = computed(() => {
+      // Trigger #1
+      obj.b = obj.a;
+      // Dispose of #1 if obj.a > 50
+      if (obj.a > 50) {
+        dispose(fn1);
+      }
+
+      times2++;
+    });
+
+    assert.strictEqual(times1, 2);
+    assert.strictEqual(times2, 1);
+
+    // Both trigger
+    obj.a = 30;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 2);
+
+    // #2 only
+    obj.a = 55;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 3);
+
+    // #2 only
+    obj.a = 30;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 4);
+
+    // Dispose of #2
+    dispose(fn2);
+
+    // None trigger
+    obj.a = 10;
+    assert.strictEqual(times1, 3);
+    assert.strictEqual(times2, 4);
   });
 
 });
@@ -374,6 +572,38 @@ describe("reactivity edge cases", () => {
     // Note that "properties added after observation are not reactive"
     obj.prop2 = 20;
     assert.strictEqual(val2, 10);
+  });
+
+  it("prototypes can be reactive while the prototype's children are not", () => {
+    // Create prototype and object
+    const proto = {
+      prop2: 10
+    };
+    const obj = {
+      prop1: 20
+    };
+    Object.setPrototypeOf(obj, proto);
+
+    // Observe the prototype
+    observe(proto);
+
+    // Verify non-reactivity of own property
+    let val1;
+    computed(() => {
+      val1 = obj.prop1;
+    });
+    assert.strictEqual(val1, 20);
+    obj.prop1 = 30;
+    assert.strictEqual(val1, 20);
+
+    // Verify reactivity of prototype property
+    let val2;
+    computed(() => {
+      val2 = obj.prop2;
+    });
+    assert.strictEqual(val2, 10);
+    proto.prop2 = 20;
+    assert.strictEqual(val2, 20);
   });
 
   it("non-enumerable properties are not reactive", () => {
@@ -555,6 +785,8 @@ describe("reactivity edge cases", () => {
 
 });
 
+// Test issues with prototype name collisions (Luar versions >=1.1.0 have
+// issues)
 describe("prototype nonsense", () => {
 
   it("updating reactive properties that share their name with any property of Object.prototype does not throw an error", () => {

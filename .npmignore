@@ -1,6 +1,8 @@
 .nyc_output
 coverage
 
+.vscode
+
 .github
 
 .editorconfig
