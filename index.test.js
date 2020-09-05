@@ -274,7 +274,7 @@ describe("computed task functionality", () => {
         obj.a++;
         times2++;
       });
-    }, "Maximum computed task length exceeded (stack overflow!)");
+    }, "Maximum computed task stack length exceeded (overflow!)");
 
     // Should have both been run over 100 times (cutoff is 2000)
     assert.operator(times1, ">", 100);
@@ -339,7 +339,7 @@ describe("computed task functionality", () => {
     console.warn = oldConsoleWarn;
 
     assert.match(warningMessage,
-      /Creating computed functions from within another computed function is not recommended/
+      /Creating computed tasks from within another computed task is not recommended/
     );
   });
 
