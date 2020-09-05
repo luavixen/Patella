@@ -27,7 +27,8 @@
 
 ## Description
 Luar is a simple and concise implementation of the reactive programming paradigm for JavaScript (with included TypeScript support).
-It is compatible with almost any browser released in the last 10 years and is also very small, weighing at around 1 kilobyte when minified and gzipped, it only contains about 300 lines of code.
+Luar is also compatible with almost any browser released since 2010, being designed with both backwards and forward compatibility in mind.
+Additionally, Luar is very small, weighing at around XXX kilobyteX when minified and gzipped, it only contains about XXX semicolons of code!
 
 Luar provides functions for "observing" JavaScript objects, for creating functions that are "computed" (known as computed tasks) which operate on the data inside of those objects, and for removing "computed" functions so that they are no longer executed.
 When the data in an observed object updates, any computed tasks that depend on that data are re-run.
@@ -52,18 +53,33 @@ Now the `hello-message` header will say hello to the user, updating its content 
 This is known as "declarative UI", where you declare the content of your UI and how it connects to your data, and the UI updates \~reactively\~.
 You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/latest).
 
-Oh and here is the API's type definitions, laid bare for your eyes to gaze:
+Finally, here are the functions provided by Luar, with JSDoc and TypeScript annotations:
 ```typescript
-/** Make a JavaScript object reactive */
-function observe<T extends object>(obj: T): T;
+/**
+ * Make a JavaScript object reactive
+ * @param {Object} obj Object to observe
+ * @returns {Object} Original input `obj`, now with reactivity
+ * @public
+ */
+export declare function observe<T extends object>(obj: T): T;
 
-/** Execute a function as a computed task and record its dependencies. The task
- * will then be re-run whenever its dependencies change */
-function computed<T extends () => void>(fn: T): T;
+/**
+ * Execute a function as a computed task and record its dependencies. The task
+ * will then be re-run whenever its dependencies change
+ * @param {Function} fn Function to run and register as a computed task
+ * @return {Function} Original input `fn`, now registered as a computed task
+ * @public
+ */
+export declare function computed<T extends () => void>(fn: T): T;
 
-/** Mark a function as "disposed" which will prevent it from being run as a
- * computed task and remove it from the dependencies of reactive objects */
-function dispose(fn?: (() => void) | null): void;
+/**
+ * Mark a function as "disposed" which will prevent it from being run as a
+ * computed task and remove it from the dependencies of reactive objects
+ * @param {Function} [fn] Computed task function to dispose of, omit this
+ *                        parameter to dispose of the current computed task
+ * @public
+ */
+export declare function dispose(fn?: (() => void) | null): void;
 ```
 
 ## Installation
