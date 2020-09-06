@@ -141,7 +141,6 @@ var Luar = (function () {
    */
   var computedLock = false;
 
-
   /**
    * Throw an error indicating an overflow of `computedList`, with descriptions
    * of the last 10 pending/executed computed tasks
@@ -190,7 +189,7 @@ var Luar = (function () {
         }
       }
     } finally {
-      // Reset the `computedList`/`computedI`
+      // Reset `computedList`/`computedI`
       computedList = [];
       computedI = 0;
       // Unlock the lock for the next `computedNotify` call
@@ -205,12 +204,12 @@ var Luar = (function () {
    * @private
    */
   function computedNotify(task) {
-    // Make sure that this task isn't already in the list of executing tasks
+    // Make sure that this task isn't already in `computedList`
     for (var i = computedI; i < computedList.length; i++) {
       if (computedList[i] === task) return;
     }
 
-    // Add this task to the `computedList` at the end
+    // Add this task to `computedList`
     computedList[computedList.length] = task;
 
     // Start processing, if it isn't already running
@@ -373,7 +372,10 @@ var Luar = (function () {
 
   /** See documentation for this function in: index.d.ts */
   /* export */ function observe(obj) {
-    if (!isObject(obj)) {
+    // New in version 1.4.0, functions can now be observed! But only explicitly,
+    // functions will not be observed if they exist as children of an reactive
+    // object
+    if (!isObject(obj) && !isFunction(obj)) {
       throw new Error(createErrorMessage(
         "Attempted to observe a value that is not an object",
         "observe(obj) expects \"obj\" to be an object, got \"" + obj + "\""

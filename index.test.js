@@ -48,7 +48,10 @@ describe("api", () => {
     assert.throws(() => observe("str"),     err);
     assert.throws(() => observe(10),        err);
     assert.throws(() => observe([]),        err);
-    assert.throws(() => observe(() => {}),  err);
+    // New in version 1.4.0, functions can now be observed! But only explicitly,
+    // functions will not be observed if they exist as children of an reactive
+    // object
+    // assert.throws(() => observe(() => {}),  err);
   });
 
   it("computed is a function that takes one argument", () => {
@@ -166,6 +169,23 @@ describe("observe(obj)", () => {
     assert.deepEqual(createObject(), spreadObj);
   });
 
+  it("reactive functions can be called", () => {
+    let times = 0;
+
+    // `fn` is made reactive, just like an object (functions can have
+    // properties)
+    const fn = () => times++;
+    observe(fn);
+
+    assert.strictEqual(times, 0);
+
+    fn();
+    assert.strictEqual(times, 1);
+
+    fn();
+    assert.strictEqual(times, 2);
+  });
+
   it("observe(obj) always returns `obj`, even if the object was already observed", () => {
     const obj1 = createObject();
     const obj1Observed = observe(obj1);
@@ -201,6 +221,18 @@ describe("computed(task)", () => {
     assert.strictEqual(fn1, fn2);
   });
 
+  it("computed(task) will always return `task`, even if `task` has been disposed", () => {
+    const fn1 = () => {};
+    const fn1Computed = computed(fn1);
+
+    assert.strictEqual(fn1, fn1Computed);
+
+    const fn2 = () => {}; dispose(fn2);
+    const fn2Computed = computed(fn2);
+
+    assert.strictEqual(fn2, fn2Computed);
+  });
+
   it("computed tasks are called when their dependencies update", () => {
     const obj = createObservedObject();
 
@@ -224,6 +256,23 @@ describe("computed(task)", () => {
     // Update property that is a dependency again
     obj.a = 34;
     assert.strictEqual(times, 3);
+  });
+
+  it("computed tasks can depend on properties of (reactive) functions", () => {
+    const fn = () => {};
+    fn.a = 10;
+    observe(fn);
+
+    let times = 0;
+    computed(() => {
+      fn.a;
+      times++;
+    });
+
+    assert.strictEqual(times, 1);
+
+    fn.a = 20;
+    assert.strictEqual(times, 2);
   });
 
   it("computed tasks can depend on multiple objects", () => {
@@ -401,18 +450,6 @@ describe("computed(task)", () => {
     assert.strictEqual(obj.a, 31);
   });
 
-  it("computed(task) will always return `task`, even if `task` has been disposed", () => {
-    const fn1 = () => {};
-    const fn1Computed = computed(fn1);
-
-    assert.strictEqual(fn1, fn1Computed);
-
-    const fn2 = () => {}; dispose(fn2);
-    const fn2Computed = computed(fn2);
-
-    assert.strictEqual(fn2, fn2Computed);
-  });
-
 });
 
 // Test: The dispose(task) function and functionality of disposed tasks
@@ -488,7 +525,7 @@ describe("dispose(task)", () => {
     assert.strictEqual(times3, 4);
   });
 
-  it("the current computed task is disposed if dispose(task) is called without \"task\"", () => {
+  it("the current computed task is disposed if dispose(task) is called without `task`", () => {
     const obj = createObservedObject();
 
     // Register computed task that increments times but disposes itself if `obj.a` > 30
@@ -730,6 +767,23 @@ describe("edge cases", () => {
     assert.strictEqual(times, 2);
   });
 
+  it("observe will ignore functions when making objects reactive recursively", () => {
+    const subFn = Object.assign(() => {}, { x: 10 });
+    const obj = { a: 10, b: 20, sub: subFn };
+    observe(obj);
+
+    let times = 0;
+    computed(() => {
+      subFn.x;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Recursive reactiveness ignores functions!
+    subFn.x = 20;
+    assert.strictEqual(times, 1); // <-----
+  });
+
   it("observe will make objects set onto a reactive property into reactive objects themselves", () => {
     // Create a reactive object
     const obj = createObservedObject();
@@ -749,6 +803,24 @@ describe("edge cases", () => {
     // Since it was set onto a reactive property, it was also made reactive
     subObj.x = false;
     assert.strictEqual(times, 2);
+  });
+
+  it("observe will ignore functions that are set onto a reactive property", () => {
+    const obj = createObservedObject();
+
+    const subFn = Object.assign(() => {}, { x: true });
+    obj.a = subFn;
+
+    let times = 0;
+    computed(() => {
+      subFn.x;
+      times++;
+    });
+    assert.strictEqual(times, 1);
+
+    // Implicit reactiveness ignores functions!
+    subFn.x = false;
+    assert.strictEqual(times, 1); // <-----
   });
 
   it("arrays are not reactive", () => {
