@@ -118,16 +118,41 @@ var Luar = (function () {
   }
 
 
+  /**
+   * Maximum number of computed tasks allowed in `computedList`, exceeding this
+   * value will cause an overflow error to be thrown
+   */
   var computedLimit = 2000;
-  var computedList = [], computedI = 0;
+
+  /**
+   * List of currently executing computed tasks
+   */
+  var computedList = [];
+  /**
+   * Index into `computedList`, points to the currently executing computed task
+   */
+  var computedI = 0;
+
+  /**
+   * Mutex-like lock flag for `computedProcess` to prevent multiple executions
+   * of the computed task list
+   */
   var computedLock = false;
 
+
+  /**
+   * Throw an error indicating an overflow of `computedList`, with descriptions
+   * of the last 10 pending/executed computed tasks
+   * @private
+   */
   function computedOverflow() {
+    // Get the names of the last 10 computed tasks in `computedList`
     var taskNames = [];
     for (var i = computedList.length - 11; i < computedList.length; i++) {
       taskNames[taskNames.length] = i + ": " + getFunctionName(computedList[i]);
     }
 
+    // Throw a descriptive error containing the last 10 task function names
     throw new Error(createErrorMessage(
       "Maximum computed task stack length exceeded (overflow!)",
       "Last 10 tasks in the stack:\n" +
@@ -135,36 +160,58 @@ var Luar = (function () {
     ));
   }
 
+  /**
+   * Execute all pending computed tasks in `computedList`
+   * @private
+   */
   function computedProcess() {
+    // Attempt to lock the computed processing state (return if already
+    // executing)
     if (computedLock) return;
     computedLock = true;
 
+    // Catch errors from rogue computed tasks
     try {
+      // Loop through all pending-execution computed tasks
       for (; computedI < computedList.length; computedI++) {
         var task = computedList[computedI];
 
+        // If the task has not been `dispose(task)`'ed, run it!
         if (!hasOwnProperty(task, disposeHint)) {
           task();
         }
 
+        // If we've gone overboard and executed too many tasks, throw an
+        // overflow error
         if (computedI > computedLimit) {
           computedOverflow();
         }
       }
     } finally {
+      // Reset the `computedList`/`computedI`
       computedList = [];
       computedI = 0;
+      // Unlock the lock for the next `computedNotify` call
       computedLock = false;
     }
   }
 
+  /**
+   * Add `task` to `computedList` if it hasn't already been added, then start
+   * processing through `computedList` if processing isn't already running
+   * @param {Function} task Computed task function to queue
+   * @private
+   */
   function computedNotify(task) {
+    // Make sure that this task isn't already in the list of executing tasks
     for (var i = computedI; i < computedList.length; i++) {
       if (computedList[i] === task) return;
     }
 
+    // Add this task to the `computedList` at the end
     computedList[computedList.length] = task;
 
+    // Start processing, if it isn't already running
     computedProcess();
   }
 
@@ -344,7 +391,7 @@ var Luar = (function () {
       ));
     }
 
-    if (computedList[computedI]) {
+    if (computedLock) {
       console.warn(createErrorMessage(
         "Creating computed tasks from within another computed task is not recommended",
         "Offending computed task: " + getFunctionName(computedList[computedI]) +
@@ -380,12 +427,20 @@ var Luar = (function () {
   }
 
 
+  /**
+   * Object containing all of Luar's public functions, which will be exported as
+   * `Luar` or through `module.exports` if `module` is valid
+   */
+  var localExports = { observe: observe, computed: computed, dispose: dispose };
+
+  // Set localExports on the current module if we are in a CommonJS environment
   /* istanbul ignore else */
-  if (typeof exports === "object") {
-    exports.observe = observe;
-    exports.computed = computed;
-    exports.dispose = dispose;
+  if (typeof module !== "undefined") {
+    module.exports = localExports;
   }
 
-  return { observe: observe, computed: computed, dispose: dispose };
+  // Return the localExports which will be set as `Luar`, for browser-like
+  // environments
+  return localExports;
+
 })();
