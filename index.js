@@ -3,7 +3,7 @@
  * Extremely small, fast and compatible (IE 9 and up) reactive programming
  * library, similar to Hyperactiv.
  *
- * Version 1.4.0-PRERELEASE
+ * Version 1.4.0
  *
  * MIT License
  *
@@ -373,7 +373,7 @@ var Luar = (function () {
   /** See documentation for this function in: index.d.ts */
   /* export */ function observe(obj) {
     // New in version 1.4.0, functions can now be observed! But only explicitly,
-    // functions will not be observed if they exist as children of an reactive
+    // functions will not be observed if they exist as children of a reactive
     // object
     if (!isObject(obj) && !isFunction(obj)) {
       throw new Error(createErrorMessage(
