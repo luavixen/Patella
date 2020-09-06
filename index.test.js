@@ -1,32 +1,37 @@
-// Chai provides various assertion functions
+/* jshint ignore:start */
+
 const { assert } = require("chai");
 
-// Get the Luar functions
 const { observe, computed, dispose } = require(".");
 
-// Function for making a basic object containing primitives
-const makeObj = () =>
-  ({
-    a: 10, b: 20,
-    example: { hello: "Hello", world: "world", happy: true },
-    ["null?"]: null
-  });
+/**
+ * Create a mock object with various properties of various types
+ * @returns {Object} Mock object
+ * @private
+ * @function
+ */
+const createObject = () => ({
+  a: 10, b: 20, c: 30,
+  d: { d1: 35, d2: 40 },
+  // e: () => true,
+  f: [1, 2, 3],
+  g: false,
+  h: "Hello, world.",
+  i: undefined,
+  j: null
+});
 
-// Function for making an observed object
-const makeObserved = () =>
-  observe({
-    a: 10, b: 20, c: 30,
-    d: { d1: 35, d2: 40 },
-    e: () => true,
-    f: [1, 2, 3],
-    g: false,
-    h: "Hello, world.",
-    i: undefined,
-    j: null
-  });
+/**
+ * Create a reactive mock object with various properties of various types
+ * @returns {Object} Reactified mock object
+ * @private
+ * @function
+ */
+const createObservedObject = () => observe(createObject());
 
-// Test API function definitions and basic typechecking error conditions
-describe("api safety", () => {
+
+// Test: API structure and type safety
+describe("api", () => {
 
   it("observe is a function that takes one argument", () => {
     assert.typeOf(observe, "function");
@@ -34,11 +39,16 @@ describe("api safety", () => {
   });
 
   it("observe fails if its argument is not an object", () => {
-    const err = "Attempted to observe a value that is not an object";
+    const err =
+      "Attempted to observe a value that is not an object";
     assert.throws(() => observe(),          err);
+    assert.throws(() => observe(undefined), err);
     assert.throws(() => observe(null),      err);
-    assert.throws(() => observe(() => {}),  err);
+    assert.throws(() => observe(true),      err);
+    assert.throws(() => observe("str"),     err);
+    assert.throws(() => observe(10),        err);
     assert.throws(() => observe([]),        err);
+    assert.throws(() => observe(() => {}),  err);
   });
 
   it("computed is a function that takes one argument", () => {
@@ -49,9 +59,14 @@ describe("api safety", () => {
   it("computed fails if its argument is not a function", () => {
     const err =
       "Attempted to register a value that is not a function as a computed task";
-    assert.throws(() => computed(),     err);
-    assert.throws(() => computed(null), err);
-    assert.throws(() => computed({}),   err);
+    assert.throws(() => computed(),          err);
+    assert.throws(() => computed(undefined), err);
+    assert.throws(() => computed(null),      err);
+    assert.throws(() => computed(true),      err);
+    assert.throws(() => computed("str"),     err);
+    assert.throws(() => computed(10),        err);
+    assert.throws(() => computed([]),        err);
+    assert.throws(() => computed({}),        err);
   });
 
   it("dispose is a function that takes one argument", () => {
@@ -62,9 +77,11 @@ describe("api safety", () => {
   it("dispose fails if its argument is not a function and not null/undefined", () => {
     const err =
       "Attempted to dispose of a value that is not a function";
-    assert.throws(() => dispose(10),    err);
-    assert.throws(() => dispose("fn"),  err);
-    assert.throws(() => dispose({}),    err);
+    assert.throws(() => dispose(true),      err);
+    assert.throws(() => dispose("str"),     err);
+    assert.throws(() => dispose(10),        err);
+    assert.throws(() => dispose([]),        err);
+    assert.throws(() => dispose({}),        err);
   });
 
   it("dispose fails if its argument is null/undefined and not being run in a computed function", () => {
@@ -77,52 +94,56 @@ describe("api safety", () => {
 
 });
 
-// Test specific observe functionality like the like enumerating observed
-// objects or creating/modifying observed properties
-describe("observed object correctness", () => {
+// Test: The observe(obj) function and specific reactive object functionality
+// like enumerating reactive objects or creating/modifying reactive properties
+describe("observe(obj)", () => {
 
-  it("observed objects can have properties set/get", () => {
-    const obj = makeObserved();
+  it("reactive objects can have their properties accessed like normal objects", () => {
+    const obj = createObservedObject();
 
-    // Get
+    // Get property `obj.a`
     const valOfA = obj.a;
     assert.strictEqual(valOfA, 10);
 
-    // Get a property that does not exist
+    // Get property that does not exist
     const valOfMissing = obj.missing;
     assert.strictEqual(valOfMissing, undefined);
 
-    // Set
+    // Set property `obj.a`
     obj.a = true;
     assert.strictEqual(obj.a, true);
 
-    // Set object
-    obj.b = makeObj();
-    assert.deepStrictEqual(obj.b, makeObj());
+    // Set child object on property `obj.b`
+    obj.b = createObject();
+    assert.deepStrictEqual(obj.b, createObject());
 
-    // Set object on a property that does not exist
-    obj.notDefined = makeObj();
-    assert.deepStrictEqual(obj.notDefined, makeObj());
+    // Set child object on property that does not exist
+    obj.notDefined = createObject();
+    assert.deepStrictEqual(obj.notDefined, createObject());
   });
 
-  it("observed objects can be iterated through", () => {
-    const obj = makeObj();
-    const objKeys = Object.keys(obj);
+  it("reactive objects can be iterated through", () => {
+    const obj = createObject();
+
+    // Keys of `obj` before being made reactive
+    const beforeObserveKeys = Object.keys(obj);
+    // Keys of `obj` after being made reactive
+    const afterObserveKeys = [];
+
     observe(obj);
 
-    // Make sure that we can iterate through all the keys
-    const keys = [];
+    // Populate `afterObserveKeys` manually
     for (const key in obj) {
       if (!obj.hasOwnProperty(key)) continue;
-      keys.push(key);
+      afterObserveKeys.push(key);
     }
 
-    assert.deepStrictEqual(keys, objKeys);
+    assert.deepStrictEqual(beforeObserveKeys, afterObserveKeys);
   });
 
-  it("observed objects can have cyclic references", () => {
-    // Make an object that contains itself
-    const obj = makeObj();
+  it("reactive objects can have cyclic references", () => {
+    // Create an object that contains itself (`obj.self` === `obj`)
+    const obj = createObject();
     obj.self = obj;
 
     // Observe that object
@@ -130,23 +151,41 @@ describe("observed object correctness", () => {
 
     // Make sure it still references itself
     assert.strictEqual(obj, obj.self);
-    assert.strictEqual(obj, obj.self.self.self.self.self.self.self);
+    assert.strictEqual(obj, obj.self.self);
+    assert.strictEqual(obj, obj.self.self.self);
+    assert.strictEqual(obj, obj.self.self.self.self);
+    assert.strictEqual(obj, obj.self.self.self.self.self);
   });
 
-  it("observed objects can be spread", () => {
-    const obj = makeObj();
-    observe(obj);
+  it("reactive objects work correctly with the spread operator", () => {
+    const obj = createObservedObject();
 
     const spreadObj = { ...obj };
 
     assert.deepEqual(obj, spreadObj);
-    assert.deepEqual(makeObj(), spreadObj);
+    assert.deepEqual(createObject(), spreadObj);
+  });
+
+  it("observe(obj) always returns `obj`, even if the object was already observed", () => {
+    const obj1 = createObject();
+    const obj1Observed = observe(obj1);
+
+    assert.deepStrictEqual(obj1, obj1Observed);
+
+    const obj2 = observe(createObject());
+    const obj2Observed = observe(obj2); // Luar versions 1.3.0<= have a broken
+                                        // observe(obj) implementation that
+                                        // returns `undefined` if `obj` has
+                                        // already been observed
+
+    assert.deepStrictEqual(obj2, obj2Observed);
   });
 
 });
 
-// Test computed tasks and their interactions with objects and eachother
-describe("computed task functionality", () => {
+// Test: The computed(task) function, computed tasks, and their interactions
+// with reactive objects + other computed tasks
+describe("computed(task)", () => {
 
   it("computed task functions are called when they are created", () => {
     let times = 0;
@@ -155,7 +194,7 @@ describe("computed task functionality", () => {
     assert.strictEqual(times, 1);
   });
 
-  it("computed returns the task function passed to it", () => {
+  it("computed(task) returns the `task` function passed to it", () => {
     const fn1 = () => {};
     const fn2 = computed(fn1);
 
@@ -163,7 +202,7 @@ describe("computed task functionality", () => {
   });
 
   it("computed tasks are called when their dependencies update", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     let times = 0;
     computed(() => {
@@ -174,24 +213,26 @@ describe("computed task functionality", () => {
     // Should have already been called (to find its dependencies)
     assert.strictEqual(times, 1);
 
-    // Update a dependency
+    // Update property that is a dependency
     obj.a = 22;
     assert.strictEqual(times, 2);
 
-    // Update a property that is not a dependency
+    // Update property that is not a dependency
     obj.b = 11;
     assert.strictEqual(times, 2);
 
-    // Update a dependency again
+    // Update property that is a dependency again
     obj.a = 34;
     assert.strictEqual(times, 3);
   });
 
   it("computed tasks can depend on multiple objects", () => {
-    const obj1 = makeObserved(), obj2 = makeObserved(), obj3 = makeObserved();
+    const obj1 = createObservedObject(),
+          obj2 = createObservedObject(),
+          obj3 = createObservedObject();
 
     let times = 0, value = null;
-    // Depends on obj1.a, obj2.b, obj3.c
+    // Depends on `obj1.a`, `obj2.b`, `obj3.c`
     computed(() => {
       value = obj1.a + obj2.b + obj3.c;
       times++;
@@ -201,38 +242,38 @@ describe("computed task functionality", () => {
     assert.strictEqual(times, 1);
     assert.strictEqual(value, 60);
 
-    // Update obj1's dependency
+    // Update `obj1`'s dependency
     obj1.a = 11;
     assert.strictEqual(times, 2);
     assert.strictEqual(value, 61);
 
-    // Update a property in obj2 that isn't a dependency (no effect)
+    // Update property in `obj2` that isn't a dependency (no effect)
     obj2.a = 34;
     assert.strictEqual(times, 2);
     assert.strictEqual(value, 61);
 
-    // Update obj2's dependency
+    // Update `obj2`'s dependency
     obj2.b = 21;
     assert.strictEqual(times, 3);
     assert.strictEqual(value, 62);
 
-    // Update obj3's dependency
+    // Update `obj3`'s dependency
     obj3.c = 0;
     assert.strictEqual(times, 4);
     assert.strictEqual(value, 32);
   });
 
   it("computed tasks will trigger updates in eachother", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
-    // Depends on a
+    // Depends on `obj.a`
     let times1 = 0;
     computed(() => {
       obj.a;
       times1++;
     });
 
-    // Depends on b (updates a if b > 40)
+    // Depends on `obj.b` (updates `obj.a` if `obj.b` > 40)
     let times2 = 0;
     computed(() => {
       if (obj.b > 40) {
@@ -256,9 +297,9 @@ describe("computed task functionality", () => {
   });
 
   it("computed tasks will fail if they infinitely depend on eachother", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
-    // Depends on a, sets b
+    // Depends on `obj.a`, sets `obj.b`
     let times1 = 0;
     computed(() => {
       obj.a;
@@ -266,7 +307,7 @@ describe("computed task functionality", () => {
       times1++;
     });
 
-    // Depends on b, sets a
+    // Depends on `obj.b`, sets `obj.a`
     let times2 = 0;
     assert.throws(() => {
       computed(() => {
@@ -282,7 +323,7 @@ describe("computed task functionality", () => {
   });
 
   it("computed tasks can be force-notified by re-computing them", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     // Create a computed task that moves a value
     let times = 0;
@@ -310,7 +351,7 @@ describe("computed task functionality", () => {
   });
 
   it("computed tasks will generate warnings if created/notified from within another computed task", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     const oldConsoleWarn = console.warn;
 
@@ -344,9 +385,9 @@ describe("computed task functionality", () => {
   });
 
   it("computed tasks will propagate errors to where they get triggered", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
-    // Generates an error if obj.a is set to a value above 30
+    // Generates an error if `obj.a` is set to a value above 30
     computed(() => {
       if (obj.a > 30) {
         throw new Error("Oops!");
@@ -360,14 +401,25 @@ describe("computed task functionality", () => {
     assert.strictEqual(obj.a, 31);
   });
 
+  it("computed(task) will always return `task`, even if `task` has been disposed", () => {
+    const fn1 = () => {};
+    const fn1Computed = computed(fn1);
+
+    assert.strictEqual(fn1, fn1Computed);
+
+    const fn2 = () => {}; dispose(fn2);
+    const fn2Computed = computed(fn2);
+
+    assert.strictEqual(fn2, fn2Computed);
+  });
+
 });
 
-// Test disposal of computed tasks, ensuring they get removed and are not run
-// again
-describe("dispose functionality", () => {
+// Test: The dispose(task) function and functionality of disposed tasks
+describe("dispose(task)", () => {
 
   it("computed tasks are removed from dependencies when disposed", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     let times = 0;
     const fn = computed(() => {
@@ -388,9 +440,9 @@ describe("dispose functionality", () => {
   });
 
   it("only disposed computed tasks are removed from dependencies when disposed", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
-    // Create 3 computed tasks that all depend on obj.a
+    // Create 3 computed tasks that all depend on `obj.a`
     let fn1, fn2, fn3;
     let times1 = 0, times2 = 0, times3 = 0;
     fn1 = computed(() => { obj.c = obj.a * 2; times1++ });
@@ -436,10 +488,10 @@ describe("dispose functionality", () => {
     assert.strictEqual(times3, 4);
   });
 
-  it("the current computed task is disposed if dispose(fn) is called without \"fn\"", () => {
-    const obj = makeObserved();
+  it("the current computed task is disposed if dispose(task) is called without \"task\"", () => {
+    const obj = createObservedObject();
 
-    // Register computed task that increments times but disposes itself if obj.a > 30
+    // Register computed task that increments times but disposes itself if `obj.a` > 30
     let times = 0;
     computed(() => {
       if (obj.a > 30) {
@@ -450,11 +502,11 @@ describe("dispose functionality", () => {
     // Ran immediately
     assert.strictEqual(times, 1);
 
-    // Works fine if obj.a <= 30
+    // Works fine if `obj.a` <= 30
     obj.a = 20;
     assert.strictEqual(times, 2);
 
-    // Runs, realizes obj.a > 30, disposes
+    // Runs, realizes `obj.a` > 30, disposes
     obj.a = 35;
     assert.strictEqual(times, 3);
 
@@ -480,7 +532,7 @@ describe("dispose functionality", () => {
   });
 
   it("if a computed task triggers another computed task, but then disposes of the other computed task, the other computed task will not be run", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     // Task #1
     let times1 = 0;
@@ -491,12 +543,12 @@ describe("dispose functionality", () => {
 
     assert.strictEqual(times1, 1);
 
-    // Task #2 (updates #1, disposes of #1 if obj.a > 50)
+    // Task #2 (updates #1, disposes of #1 if `obj.a` > 50)
     let times2 = 0;
     const fn2 = computed(() => {
       // Trigger #1
       obj.b = obj.a;
-      // Dispose of #1 if obj.a > 50
+      // Dispose of #1 if `obj.a` > 50
       if (obj.a > 50) {
         dispose(fn1);
       }
@@ -533,9 +585,9 @@ describe("dispose functionality", () => {
 
 });
 
-// Test various important reactivity edge cases such as special properties,
-// prototypes, adding new properties, and re-observing objects
-describe("reactivity edge cases", () => {
+// Test: Reactivity edge cases such as special properties (property
+// descriptors), prototypes, adding new properties, and re-observing objects
+describe("edge cases", () => {
 
   it("prototype properties are not reactive", () => {
     // Create prototype and object
@@ -607,9 +659,9 @@ describe("reactivity edge cases", () => {
   });
 
   it("non-enumerable properties are not reactive", () => {
-    const obj = makeObj();
+    const obj = createObject();
 
-    // Define "test" as non-enumerable
+    // Define `obj.test` as non-enumerable
     Object.defineProperty(obj, "test", {
       enumerable: false,
       value: 10
@@ -618,7 +670,7 @@ describe("reactivity edge cases", () => {
     // Observe the object
     observe(obj);
 
-    // Verify non-reactivity of "test"
+    // Verify non-reactivity of `obj.test`
     let val;
     computed(() => val = obj.test);
     obj.test = 20;
@@ -626,9 +678,9 @@ describe("reactivity edge cases", () => {
   });
 
   it("non-configurable properties are not reactive", () => {
-    const obj = makeObj();
+    const obj = createObject();
 
-    // Define "test" as non-configurable
+    // Define `obj.test` as non-configurable
     Object.defineProperty(obj, "test", {
       configurable: false,
       value: 10
@@ -643,12 +695,9 @@ describe("reactivity edge cases", () => {
   });
 
   it("observe will not re-reactify an object that is already reactive", () => {
-    const obj = makeObj();
+    const obj = createObservedObject();
 
-    // Observe the object
-    observe(obj);
-
-    // Make "a" non-reactive by re-defining it with a value of 0
+    // Make `obj.a` non-reactive by re-defining it with a value of 0
     Object.defineProperty(obj, "a", {
       value: 0
     });
@@ -656,7 +705,7 @@ describe("reactivity edge cases", () => {
     // Re-observe the object (does nothing)
     observe(obj);
 
-    // Verify the non-reactivity of "a"
+    // Verify the non-reactivity of `obj.a`
     let val;
     computed(() => val = obj.a);
     obj.a = 10;
@@ -683,7 +732,7 @@ describe("reactivity edge cases", () => {
 
   it("observe will make objects set onto a reactive property into reactive objects themselves", () => {
     // Create a reactive object
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
     // Create a non-reactive object and set it onto one of the reactive
     // properties of obj
@@ -704,8 +753,7 @@ describe("reactivity edge cases", () => {
 
   it("arrays are not reactive", () => {
     // Create a reactive object with an array
-    const obj = { arr: [1, 2, 3, 4] };
-    observe(obj);
+    const obj = observe({ arr: [1, 2, 3, 4] });
 
     // Count how many times this fancy array-based computed property gets
     // notified
@@ -743,10 +791,10 @@ describe("reactivity edge cases", () => {
 
   it("properties added after observation are not reactive", () => {
     // Create a new reactive object
-    const obj = makeObserved();
+    const obj = createObservedObject();
 
-    // Add the new property "added", which will not be reactive as it was added
-    // after creation
+    // Add the new property `obj.added`, which will not be reactive as it was
+    // added after creation
     obj.added = 10;
 
     let times = 0;
@@ -762,7 +810,7 @@ describe("reactivity edge cases", () => {
   });
 
   it("re-running observe on an object will not make properties added after observation reactive", () => {
-    const obj = makeObserved();
+    const obj = createObservedObject();
     obj.added = 10;
 
     let times = 0;
@@ -785,7 +833,7 @@ describe("reactivity edge cases", () => {
 
 });
 
-// Test issues with prototype name collisions (Luar versions >=1.1.0 have
+// Test: Issues with prototype name collisions (Luar versions 1.1.0<= have
 // issues)
 describe("prototype nonsense", () => {
 
@@ -807,36 +855,36 @@ describe("prototype nonsense", () => {
     // Then try and update it
     obj.hasOwnProperty++; // Due to the
                           // dependencyMap.__proto__ === Object.prototype, this
-                          // line will crash Luar versions >=1.1.0 with a
+                          // line will crash Luar versions 1.1.0<= with a
                           // cryptic error message
     assert.strictEqual(times, 2);
   });
 
   it("properties named __proto__ are ignored by observe", () => {
-    // Create a new object with a __proto__ property
+    // Create a new object with a `__proto__` property
     const obj = Object.create(null);
     Object.defineProperty(obj, "__proto__", {
       value: 10
     });
 
-    // Check that __proto__ was correctly set
+    // Check that `obj.__proto__` was correctly set
     const overriddenPrototype = obj.__proto__;
     const actualPrototype = Object.getPrototypeOf(obj);
     assert.strictEqual(overriddenPrototype, 10);
     assert.strictEqual(actualPrototype, null);
 
-    // Get the current __proto__ descriptor
+    // Get the current `obj.__proto__` descriptor
     const getDescriptor = () => Object.assign({}, Object.getOwnPropertyDescriptor(obj, "__proto__"));
     const originalDescriptor = getDescriptor();
 
     // Reactify the object
     observe(obj);
 
-    // Check that the __proto__ descriptor was left unchanged
+    // Check that the `obj.__proto__` descriptor was left unchanged
     const observedDescriptor = getDescriptor();
     assert.deepEqual(originalDescriptor, observedDescriptor);
 
-    // Attempt to attach a computed property to __proto__
+    // Attempt to attach a computed property to `obj.__proto__`
     let times = 0;
     computed(() => {
       obj.__proto__;
