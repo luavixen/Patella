@@ -19,7 +19,7 @@
   "types": "index.d.ts",
   "scripts": {
     "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js",
-    "minify": "terser --compress --mangle --output index.min.js index.js # TODO: Use a Terser config file",
+    "minify": "terser index.js --output index.min.js --config-file terser.json",
     "prepublishOnly": "npm test && npm run minify"
   },
   "devDependencies": {
