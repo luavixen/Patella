@@ -21,8 +21,8 @@
 
 <h2 align="center">Luar &#x1F501;</h2>
 <p align="center"><i>
-  Luar provides unctions for facilitating simple <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
-  Luar is compatible with ECMAScript 5 (2009) and up and functions without issue on Internet Explorer 9 and newer.
+  Luar provides functions for facilitating simple <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Vue.js and Hyperactiv.
+  Luar is compatible with ECMAScript 5 (2009) and up and works without issue on Internet Explorer 9 and newer.
 </i></p>
 
 ## Description
@@ -37,21 +37,21 @@ I find this functionality most useful for MVC (Model-View-Controller) style decl
 On that note, let's use Luar to make a reactive webpage that says hello to a user:
 ```html
 <h2 id="hello-message"></h2>
-<input type="text" oninput="model.first = value">
-<input type="text" oninput="model.last = value">
+<input type="text" oninput="model.first = value" placeholder="First">
+<input type="text" oninput="model.last = value"  placeholder="Last">
 
 <script>
-  const elem = document.findElementById("hello-message");
+  const elem = document.getElementById("hello-message");
 
   // Our model object contains first and last fields
-  const model = observe({ first: "", last: "" });
+  const model = Luar.observe({ first: "", last: "" });
   // "Declare" that the element's inner text should be something like Hello, first last!
-  computed(() => elem.innerText = `Hello, ${model.first} ${model.last}!`);
+  Luar.computed(() => elem.innerText = `Hello, ${model.first} ${model.last}!`);
 </script>
 ```
 Now the `hello-message` header will say hello to the user, updating its content as soon as the model changes (on input)!
 This is known as "declarative UI", where you declare the content of your UI and how it connects to your data, and the UI updates \~reactively\~.
-You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/latest).
+You can [view this example on JSFiddle](https://jsfiddle.net/luawtf/ghbtvexo/latest) (you may have to press Run before the example starts).
 
 Finally, here are the functions provided by Luar, with JSDoc and TypeScript annotations:
 ```typescript
@@ -88,8 +88,13 @@ Luar is available on [NPM](https://www.npmjs.com/package/luar):
 npm install luar
 ```
 ```javascript
-import { observe, computed } from "luar";
+// Normal CommonJS modules:
+const { observe, computed, dispose } = require("luar");
+
+// Or for environments with backwards-compatible ES modules:
+import { observe, computed, dispose } from "luar";
 ```
+
 Or, for people working without a bundler, it can be included from [UNPKG](https://www.unpkg.com/browse/luar@latest/):
 ```html
 <script src="https://unpkg.com/luar"></script>
@@ -99,6 +104,9 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
   Luar.dispose(function () {});
 </script>
 ```
+
+By default, the CommonJS import is unminified and the UNPKG import is minified using a Terser configuration designed for execution speed.
+These files are available in `luar/index.js` and `luar/index.min.js` respectively.
 
 ## Usage
  - [1. Basic reactivity](#1-basic-reactivity)
@@ -268,6 +276,24 @@ computed(() => console.log(someData.m)); // Output "33"
 // Look, reactive!!
 model.data.m++; // Output "34"
 someData.m++; // Output "35"
+```
+
+Since functions are also objects, functions can be observed and have reactive properties.
+However, functions are currently exempt from implicit observation (both recursive and being set onto a reactive property) and can only be made reactive by passing them directly to `observe(obj)`.
+```javascript
+function fn1() {}; fn1.x = 10;
+function fn2() {}; fn2.y = 20;
+function fn3() {}; fn3.z = 30;
+
+observe(fn1);
+fn1.x // <-- Will be reactive (observed directly)
+
+observe({ subFunc: fn2 });
+fn2.y // <-- Will NOT be reactive (recursive observation)
+
+const obj = observe({ setFunc: null });
+obj.setFunc = fn3;
+fn3.z // <-- Will NOT be reactive (set onto reactive property)
 ```
 
 ### 4. Cleaning up
