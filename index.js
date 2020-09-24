@@ -3,7 +3,7 @@
  * Extremely small, fast and compatible (IE 9 and up) reactive programming
  * library, similar to Hyperactiv.
  *
- * Version 1.4.0
+ * Version 1.4.1-PRERELEASE
  *
  * MIT License
  *
@@ -34,7 +34,6 @@ var Luar = (function () {
    * Check if `val` is a valid JavaScript object
    * @param {any} val Value to check
    * @returns {boolean} Indicates whether `val` is an object
-   * @private
    */
   function isObject(val) {
     return val && typeof val === "object" && !Array.isArray(val);
@@ -43,7 +42,6 @@ var Luar = (function () {
    * Check if `val` is a valid JavaScript function
    * @param {any} val Value to check
    * @returns {boolean} Indicates whether `val` is a function
-   * @private
    */
   function isFunction(val) {
     return typeof val === "function";
@@ -62,7 +60,6 @@ var Luar = (function () {
   /**
    * Create a "Map" (object will no prototype)
    * @returns {Object} Empty object with no prototype
-   * @private
    */
   function createMap() {
     return Object.create(null);
@@ -74,7 +71,6 @@ var Luar = (function () {
    * @param {any} fn Function to get name from
    * @returns {any} Function name, or "anonymous" if the function's name is
    *                invalid. Note that this value may not be a string!
-   * @private
    */
   function getFunctionName(fn) {
     if (isFunction(fn) && fn.name) {
@@ -90,7 +86,6 @@ var Luar = (function () {
    * @param {string} body Error message body
    * @param {boolean} [warn] Use "WRN" instead of "ERR"?
    * @returns {string} Formatted error message string
-   * @private
    */
   function createErrorMessage(header, body, warn) {
     return "[Luar] " + (warn ? "WRN " : "ERR ") + header + "\n" + body;
@@ -110,7 +105,6 @@ var Luar = (function () {
    * Define a hint property on an object/function
    * @param {Object} obj Object to define the hint property on
    * @param {string} hint Hint key name
-   * @private
    */
   function defineHint(obj, hint) {
     Object.defineProperty(obj, hint, {
@@ -144,7 +138,6 @@ var Luar = (function () {
   /**
    * Throw an error indicating an overflow of `computedList`, with descriptions
    * of the last 10 pending/executed computed tasks
-   * @private
    */
   function computedOverflow() {
     // Get the names of the last 10 computed tasks in `computedList`
@@ -163,7 +156,6 @@ var Luar = (function () {
 
   /**
    * Execute all pending computed tasks in `computedList`
-   * @private
    */
   function computedProcess() {
     // Attempt to lock the computed processing state (return if already
@@ -201,7 +193,6 @@ var Luar = (function () {
    * Add `task` to `computedList` if it hasn't already been added, then start
    * processing through `computedList` if processing isn't already running
    * @param {Function} task Computed task function to queue
-   * @private
    */
   function computedNotify(task) {
     // Make sure that this task isn't already in `computedList`
@@ -225,7 +216,6 @@ var Luar = (function () {
    * @param {Object} dependencyMap observeObject's dependencyMap
    * @param {string} key Key of the reactive property to get
    * @returns {any} Value stored in the reactive property (shadowValMap)
-   * @private
    */
   function reactiveGet(
     shadowValMap, dependencyMap,
@@ -264,7 +254,6 @@ var Luar = (function () {
    * @param {Object} dependencyMap observeObject's dependencyMap
    * @param {string} key Key of the reactive property to update
    * @param {any} val Value to set on the reactive property
-   * @private
    */
   function reactiveSet(
     shadowValMap, dependencyMap,
@@ -305,7 +294,6 @@ var Luar = (function () {
    * @param {Object} shadowValMap observeObject's shadowValMap
    * @param {Object} dependencyMap observeObject's dependencyMap
    * @param {string} key Key of the original property to reactify
-   * @private
    */
   function reactiveCreate(
     originalObj, descriptorMap, shadowValMap, dependencyMap,
@@ -337,7 +325,6 @@ var Luar = (function () {
    * Make the properties of an object reactive, if it has not already been made
    * reactive
    * @param {Object} obj Object to reactify
-   * @private
    */
   function observeObject(obj) {
     // Don't re-observe this object if it has already been observed (has observe
