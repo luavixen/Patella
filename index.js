@@ -3,7 +3,7 @@
  * Extremely small, fast and compatible (IE 9 and up) reactive programming
  * library, similar to Hyperactiv.
  *
- * Version 1.4.1-PRERELEASE
+ * Version 1.4.1
  *
  * MIT License
  *
