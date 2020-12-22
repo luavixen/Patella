@@ -24,10 +24,8 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "jshint": "^2.12.0",
-    "mocha": "^8.1.3",
-    "nyc": "^15.1.0",
-    "terser": "^4.8.0"
+    "mocha": "^8.2.1",
+    "nyc": "^15.1.0"
   },
   "repository": {
     "type": "git",
@@ -36,5 +34,8 @@
   "bugs": {
     "url": "https://github.com/luawtf/Luar/issues"
   },
-  "homepage": "https://github.com/luawtf/Luar#readme"
+  "homepage": "https://github.com/luawtf/Luar#readme",
+  "dependencies": {
+    "terser": "^5.5.1"
+  }
 }
