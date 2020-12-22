@@ -31,7 +31,7 @@
 var Luar = (function () {
 
   /**
-   * Check if `val` is a valid JavaScript object
+   * Checks if `val` is a valid JavaScript object
    * @param {any} val Value to check
    * @returns {boolean} Indicates whether `val` is an object
    */
@@ -39,7 +39,7 @@ var Luar = (function () {
     return val && typeof val === "object" && !Array.isArray(val);
   }
   /**
-   * Check if `val` is a valid JavaScript function
+   * Checks if `val` is a valid JavaScript function
    * @param {any} val Value to check
    * @returns {boolean} Indicates whether `val` is a function
    */
@@ -48,17 +48,17 @@ var Luar = (function () {
   }
 
   /**
-   * Check if `obj` has the property `key`, ignoring prototypes
+   * Checks if `obj` has the property `key`, ignoring prototypes
    * @param {Object} obj Object to call hasOwnProperty on
    * @param {string} key Key to call hasOwnProperty with
-   * @returns {boolean} Indicated whether `obj` has a property named `key`
+   * @returns {boolean} Indicates whether `obj` has a property named `key`
    */
   function hasOwnProperty(obj, key) {
     return Object.prototype.hasOwnProperty.call(obj, key);
   }
 
   /**
-   * Create a "Map" (object will no prototype)
+   * Creates a "Map" (object with no prototype)
    * @returns {Object} Empty object with no prototype
    */
   function createMap() {
@@ -67,21 +67,21 @@ var Luar = (function () {
 
 
   /**
-   * Attempt to get the name of a function
+   * Gets the name of a function
    * @param {any} fn Function to get name from
    * @returns {any} Function name, or "anonymous" if the function's name is
-   *                invalid. Note that this value may not be a string!
+   *                invalid. May not be a string!
    */
   function getFunctionName(fn) {
     if (isFunction(fn) && fn.name) {
-      return fn.name; // <- Maybe not a string (if set manually)?
+      return fn.name;
     } else {
       return "anonymous";
     }
   }
 
   /**
-   * Generate an error/warning message
+   * Generates an error/warning message
    * @param {string} header Error message header
    * @param {string} body Error message body
    * @param {boolean} [warn] Use "WRN" instead of "ERR"?
@@ -93,7 +93,8 @@ var Luar = (function () {
 
 
   /**
-   * Hint property to add to observed objects, so they don't get re-observed
+   * Hint property added to observed objects, used to check if an object has
+   * already been observed
    */
   var observeHint = "__luar";
   /**
@@ -102,7 +103,7 @@ var Luar = (function () {
    */
   var disposeHint = "__disposed";
   /**
-   * Define a hint property on an object/function
+   * Defines a hint property on an object
    * @param {Object} obj Object to define the hint property on
    * @param {string} hint Hint key name
    */
@@ -130,13 +131,13 @@ var Luar = (function () {
   var computedI = 0;
 
   /**
-   * Mutex-like lock flag for `computedProcess` to prevent multiple executions
-   * of the computed task list
+   * Mutex-like lock flag for `computedProcess` to prevent multiple executions of
+   * the computed task list
    */
   var computedLock = false;
 
   /**
-   * Throw an error indicating an overflow of `computedList`, with descriptions
+   * Throws an error indicating an overflow of `computedList`, with descriptions
    * of the last 10 pending/executed computed tasks
    */
   function computedOverflow() {
@@ -155,11 +156,10 @@ var Luar = (function () {
   }
 
   /**
-   * Execute all pending computed tasks in `computedList`
+   * Executes all pending computed tasks in `computedList`
    */
   function computedProcess() {
-    // Attempt to lock the computed processing state (return if already
-    // executing)
+    // Attempt to lock the computed processing state (return if already executing)
     if (computedLock) return;
     computedLock = true;
 
@@ -174,8 +174,8 @@ var Luar = (function () {
           task();
         }
 
-        // If we've gone overboard and executed too many tasks, throw an
-        // overflow error
+        // If we've gone overboard and executed too many tasks, throw an overflow
+        // error
         if (computedI > computedLimit) {
           computedOverflow();
         }
@@ -190,7 +190,7 @@ var Luar = (function () {
   }
 
   /**
-   * Add `task` to `computedList` if it hasn't already been added, then start
+   * Adds `task` to `computedList` if it hasn't already been added, then start
    * processing through `computedList` if processing isn't already running
    * @param {Function} task Computed task function to queue
    */
@@ -209,9 +209,9 @@ var Luar = (function () {
 
 
   /**
-   * Get the value stored in a reactive property on a reactive object. This
-   * function will also register the current computed task as a dependency, if
-   * it is not already registered
+   * Gets the value stored in a reactive property on a reactive object. This
+   * function will also register the current computed task as a dependency, if it
+   * is not already registered
    * @param {Object} shadowValMap observeObject's shadowValMap
    * @param {Object} dependencyMap observeObject's dependencyMap
    * @param {string} key Key of the reactive property to get
@@ -248,7 +248,7 @@ var Luar = (function () {
   }
 
   /**
-   * Set the value stored in a reactive property, automatically notifying any
+   * Sets the value stored in a reactive property, automatically notifying any
    * dependant computed tasks
    * @param {Object} shadowValMap observeObject's shadowValMap
    * @param {Object} dependencyMap observeObject's dependencyMap
@@ -286,7 +286,7 @@ var Luar = (function () {
   }
 
   /**
-   * Create a reactive property descriptor (added to `descriptorMap`) for `key`
+   * Creates a reactive property descriptor (added to `descriptorMap`) for `key`
    * of `originalObject`
    * @param {Object} originalObj Object to retrieve value of `key` from
    * @param {Object} descriptorMap observeObject's descriptorMap, new entry for
@@ -309,20 +309,18 @@ var Luar = (function () {
       }
     };
 
-    {
-      // Get the current value of the original property
-      var val = originalObj[key];
-      // If the value is an object, make sure it is reactive
-      if (isObject(val)) observeObject(val);
+    // Get the current value of the original property
+    var val = originalObj[key];
+    // If the value is an object, make sure it is reactive
+    if (isObject(val)) observeObject(val);
 
-      // Copy the value into the shadow map, for usage in reactiveGet and
-      // reactiveSet
-      shadowValMap[key] = val;
-    }
+    // Copy the value into the shadow map, for usage in reactiveGet and
+    // reactiveSet
+    shadowValMap[key] = val;
   }
 
   /**
-   * Make the properties of an object reactive, if it has not already been made
+   * Makes the properties of an object reactive, if it has not already been made
    * reactive
    * @param {Object} obj Object to reactify
    */
@@ -334,8 +332,8 @@ var Luar = (function () {
     // called on it a second time
     defineHint(obj, observeHint);
 
-    // shadowValMap is a shadow object that contains all the actual values of
-    // all the reactive properties
+    // shadowValMap is a shadow object that contains all the actual values of all
+    // the reactive properties
     var shadowValMap = createMap();
     // dependencyMap is a map of reactive property keys -> lists of dependent
     // computed tasks

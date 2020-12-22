@@ -1,14 +1,10 @@
-/* jshint ignore:start */
-
 const { assert } = require("chai");
 
 const { observe, computed, dispose } = require(".");
 
 /**
- * Create a mock object with various properties of various types
+ * Creates a mock object with various properties
  * @returns {Object} Mock object
- * @private
- * @function
  */
 const createObject = () => ({
   a: 10, b: 20, c: 30,
@@ -22,10 +18,8 @@ const createObject = () => ({
 });
 
 /**
- * Create a reactive mock object with various properties of various types
- * @returns {Object} Reactified mock object
- * @private
- * @function
+ * Creates a reactive mock object with various properties
+ * @returns {Object} Reactive mock object
  */
 const createObservedObject = () => observe(createObject());
 
