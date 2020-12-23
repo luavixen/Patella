@@ -1,6 +1,6 @@
 {
   "name": "luar",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Luar is a library for facilitating extremely simple Reactive Programming in JavaScript, inspired by Vue.js and Hyperactiv.",
   "author": "Lua MacDougall <luawhat@gmail.com> (https://lua.wtf/)",
   "license": "MIT",
@@ -25,7 +25,8 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "mocha": "^8.2.1",
-    "nyc": "^15.1.0"
+    "nyc": "^15.1.0",
+    "terser": "^5.5.1"
   },
   "repository": {
     "type": "git",
@@ -34,8 +35,5 @@
   "bugs": {
     "url": "https://github.com/luawtf/Luar/issues"
   },
-  "homepage": "https://github.com/luawtf/Luar#readme",
-  "dependencies": {
-    "terser": "^5.5.1"
-  }
+  "homepage": "https://github.com/luawtf/Luar#readme"
 }
