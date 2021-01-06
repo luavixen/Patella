@@ -1,8 +1,8 @@
 {
-  "name": "luar",
-  "version": "1.4.2",
-  "description": "Luar is a library for facilitating extremely simple Reactive Programming in JavaScript, inspired by Vue.js and Hyperactiv.",
-  "author": "Lua MacDougall <luawhat@gmail.com> (https://lua.wtf/)",
+  "name": "patella",
+  "version": "2.0.0",
+  "description": "Patella is a library for reactive programming in JavaScript, inspired by Hyperactiv and Vue.js.",
+  "author": "Lua MacDougall <lua@foxgirl.dev> (https://foxgirl.dev)",
   "license": "MIT",
   "keywords": [
     "reactive",
@@ -12,28 +12,36 @@
     "properties",
     "observable",
     "model",
-    "mvc"
+    "mvc",
+    "mvvc",
+    "vue",
+    "vue.js",
+    "hyperactiv"
   ],
-  "main": "index.js",
-  "unpkg": "index.min.js",
-  "types": "index.d.ts",
+  "type": "module",
+  "main": "./lib/patella.js",
+  "types": "./lib/patella.d.ts",
+  "exports": {
+    ".": {
+      "default": "./lib/patella.js"
+    }
+  },
   "scripts": {
-    "test": "nyc --reporter=lcov --reporter=text-summary mocha index.test.js",
-    "minify": "terser index.js --output index.min.js --config-file terser.json",
-    "prepublishOnly": "npm test && npm run minify"
+    "test": "c8 --reporter lcov --reporter text-summary mocha ./lib/patella.test.js",
+    "prepublishOnly": "npm test"
   },
   "devDependencies": {
+    "c8": "^7.4.0",
     "chai": "^4.2.0",
-    "mocha": "^8.2.1",
-    "nyc": "^15.1.0",
-    "terser": "^5.5.1"
+    "esm": "^3.2.25",
+    "mocha": "^8.2.1"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luawtf/Luar.git"
+    "url": "git+https://github.com/luawtf/Patella.git"
   },
   "bugs": {
-    "url": "https://github.com/luawtf/Luar/issues"
+    "url": "https://github.com/luawtf/Patella/issues"
   },
-  "homepage": "https://github.com/luawtf/Luar#readme"
+  "homepage": "https://github.com/luawtf/Patella#readme"
 }
