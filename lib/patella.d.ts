@@ -1,22 +1,19 @@
 /**
  * Makes a JavaScript object reactive
- * @param {Object} obj Object to observe
- * @returns {Object} Original input `obj`, now with reactivity
+ * @param {Object} object Object to observe
+ * @returns {Object} Input `object`, now reactive
  */
-export declare function observe<T extends object>(obj: T): T;
+export declare function observe<T extends object>(object: T): T;
 
 /**
- * Executes a function as a computed task and record its dependencies. The task
- * will then be re-run whenever its dependencies change
- * @param {Function} task Function to run and register as a computed task
- * @return {Function} Original input `task`, now registered as a computed task
+ * Calls a function and records any reactive properties it accesses, calling it again whenever any of the accessed properties update
+ * @param {Function} func Function to execute
+ * @return {Function} Input `func`
  */
-export declare function computed<T extends () => void>(task: T): T;
+export declare function computed<T extends () => void>(func: T): T;
 
 /**
- * Marks a function as "disposed" which will prevent it from being run as a
- * computed task and remove it from the dependencies of reactive objects
- * @param {Function} [task] Computed task function to dispose of, omit this
- *                          parameter to dispose of the current computed task
+ * "Disposes" a function that was run with `computed`, deregistering it so that it will no longer be called whenever any of its accessed reactive properties update
+ * @param {Function} [func] Function to dispose, omit to dispose the currently executing computed function
  */
-export declare function dispose(task?: (() => void) | null): void;
+export declare function dispose(func?: (() => void) | null): void;
