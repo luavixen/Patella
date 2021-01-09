@@ -21,6 +21,7 @@
   "type": "module",
   "main": "./lib/patella.js",
   "types": "./lib/patella.d.ts",
+  "unpkg": "./dist/patella.iffe.min.js",
   "exports": {
     ".": {
       "import": "./lib/patella.js",
