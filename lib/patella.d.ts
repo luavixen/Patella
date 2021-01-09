@@ -1,7 +1,7 @@
 /**
  * Makes a JavaScript object reactive
  * @param {Object} object Object to observe
- * @returns {Object} Input `object`, now reactive
+ * @return {Object} Input `object`, now reactive
  */
 export declare function observe<T extends object>(object: T): T;
 
