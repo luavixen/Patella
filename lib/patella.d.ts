@@ -1,14 +1,14 @@
 /**
  * Makes a JavaScript object reactive
  * @param {Object} object Object to observe
- * @return {Object} Input `object`, now reactive
+ * @returns {Object} Input `object`, now reactive
  */
 export declare function observe<T extends object>(object: T): T;
 
 /**
  * Calls a function and records any reactive properties it accesses, calling it again whenever any of the accessed properties update
  * @param {Function} func Function to execute
- * @return {Function} Input `func`
+ * @returns {Function} Input `func`
  */
 export declare function computed<T extends () => void>(func: T): T;
 
