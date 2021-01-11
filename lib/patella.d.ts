@@ -6,6 +6,13 @@
 export declare function observe<T extends object>(object: T): T;
 
 /**
+ * Prevents a JavaScript object from being made reactive
+ * @param {Object} object Object to ignore
+ * @returns {Object} Input `object`, now ignored
+ */
+export declare function ignore<T extends object>(object: T): T;
+
+/**
  * Calls a function and records any reactive properties it accesses, calling it again whenever any of the accessed properties update
  * @param {Function} func Function to execute
  * @returns {Function} Input `func`
