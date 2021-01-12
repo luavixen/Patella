@@ -1,7 +1,7 @@
 import chai from "chai";
 const { assert } = chai;
 
-import { observe, computed, dispose } from "./patella.js";
+import { observe, computed, dispose } from "../lib/patella.js";
 
 /**
  * Creates a mock object with various properties
