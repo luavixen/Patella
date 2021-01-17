@@ -31,7 +31,7 @@
     }
   },
   "scripts": {
-    "test": "c8 --reporter lcov --reporter text-summary mocha ./test/patella.test.js",
+    "test": "c8 --reporter lcov --reporter text-summary mocha --ui tdd ./test/patella.test.js",
     "build": "rollup --config rollup.config.js",
     "prepublishOnly": "npm test && npm run build"
   },
@@ -40,7 +40,7 @@
     "chai": "^4.2.0",
     "esm": "^3.2.25",
     "mocha": "^8.2.1",
-    "rollup": "^2.36.1",
+    "rollup": "^2.36.2",
     "terser": "^5.5.1"
   },
   "repository": {
