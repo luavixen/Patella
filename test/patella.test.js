@@ -253,4 +253,51 @@ suite("common reactivity", () => {
     assert.equal(chaos.x, 100);
   });
 
+  // test("", () => {
+  //   const counter = observe({ x: 0 });
+  //   computed(function one() {
+  //     counter.x++;
+  //   });
+  //   computed(function two() {
+  //     counter.x++;
+  //   });
+  // });
+
+  test("", () => {
+    const counter = observe({
+      value: 0,
+      times: 0
+    });
+    computed(dispose(() => { // Does nothing, as computed ignores disposed funcs
+      counter.value;
+      counter.times++;
+    }));
+
+    assert.equal(counter.times, 0);
+    counter.value++;
+    assert.equal(counter.times, 0);
+  });
+
+  test("", () => {
+    const countToFour = observe({
+      number: 0
+    });
+    function countByOne() {
+      countToFour.number++;
+      if (countToFour.number === 4) dispose();
+    }
+
+    assert.equal(countToFour.number, 0);
+    computed(countByOne);
+    assert.equal(countToFour.number, 1);
+    computed(countByOne);
+    assert.equal(countToFour.number, 2);
+    computed(countByOne);
+    assert.equal(countToFour.number, 3);
+    computed(countByOne);
+    assert.equal(countToFour.number, 4);
+    computed(countByOne); // No longer reactive
+    assert.equal(countToFour.number, 4);
+  });
+
 });
