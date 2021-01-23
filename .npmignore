@@ -1,4 +1,6 @@
-coverage
 .github
 .editorconfig
 .gitignore
+test
+coverage
+rollup.config.js
