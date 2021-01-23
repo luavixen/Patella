@@ -581,3 +581,229 @@ suite("order of execution", () => {
   });
 
 });
+
+suite("reactive functions", () => {
+
+  test("functions can be made reactive", () => {
+    function func() {}
+    func.x = 10;
+    observe(func);
+
+    let times = 0; computed(() => (func.x, times++));
+
+    assert.equal(times, 1);
+    func.x++;
+    assert.equal(times, 2);
+  });
+
+  test("functions are exempt from recursive reactivity", () => {
+    function func() {}
+    func.x = 10;
+    const object = observe({ func });
+
+    let times = 0; computed(() => (object.func.x, times++));
+
+    assert.equal(times, 1);
+    object.func.x++;
+    assert.equal(times, 1);
+  });
+
+  test("functions are exempt from implicit reactivity", () => {
+    function func() {}
+    func.x = 10;
+    const object = observe({ func: null });
+    object.func = func;
+
+    let times = 0; computed(() => (object.func.x, times++));
+
+    assert.equal(times, 1);
+    object.func.x++;
+    assert.equal(times, 1);
+  });
+
+});
+
+suite("edge cases", () => {
+
+  test("properties added after observation are not reactive", () => {
+    const object = observe({});
+    object.val = 10;
+    let val; computed(() => val = object.val);
+
+    assert.equal(val, 10);
+    object.val = 20; // Not reactive
+    assert.equal(val, 10);
+  });
+
+  test("objects cannot be reobserved to make properties added after observation reactive", () => {
+    const object = observe({});
+    object.val = 10;
+    observe(object); // Does nothing
+    let val; computed(() => val = object.val);
+
+    assert.equal(val, 10);
+    object.val = 20; // Not reactive
+    assert.equal(val, 10);
+  });
+
+  test("observe does not reactify prototypes", () => {
+    const object = observe(Object.setPrototypeOf({ x: 10 }, { y: 20 }));
+    let times = 0; computed(() => (object.x, object.y, times++));
+
+    assert.equal(object.x, 10);
+    assert.equal(object.y, 20);
+    assert.equal(times, 1);
+
+    object.x = 30;
+    assert.equal(times, 2);
+    object.y = 30; // Not reactive
+    assert.equal(times, 2);
+    object.x = 50;
+    assert.equal(times, 3);
+    object.y = 100; // Not reactive
+    assert.equal(times, 3);
+  });
+
+  test("prototypes can be observed but their children will not be made reactive", () => {
+    const object = Object.setPrototypeOf({ x: 10 }, observe({ y: 20 }));
+    let times = 0; computed(() => (object.x, object.y, times++));
+
+    assert.equal(object.x, 10);
+    assert.equal(object.y, 20);
+    assert.equal(times, 1);
+
+    object.x = 30; // Not reactive
+    assert.equal(times, 1);
+    object.y = 30;
+    assert.equal(times, 2);
+    object.x = 50; // Not reactive
+    assert.equal(times, 2);
+    object.y = 100;
+    assert.equal(times, 3);
+  });
+
+  test("properties that share names with Object.prototype properties work as expected", () => {
+    const object = observe({ hasOwnProperty: 10 });
+    let val; computed(() => val = object.hasOwnProperty);
+
+    assert.equal(val, 10);
+    object.hasOwnProperty = 20;
+    assert.equal(val, 20);
+  });
+
+  test("nonconfigurable properties will not be made reactive", () => {
+    const object = observe(Object.defineProperty({}, "val", {
+      configurable: false,
+      enumerable: true,
+      writable: true,
+      value: 10
+    }));
+    let val; computed(() => val = object.val);
+
+    assert.equal(val, 10);
+    object.val = 20; // Not reactive
+    assert.equal(val, 10);
+  });
+
+  test("nonenumerable properties will not be made reactive", () => {
+    const object = observe(Object.defineProperty({}, "val", {
+      configurable: true,
+      enumerable: false,
+      writable: true,
+      value: 10
+    }));
+    let val; computed(() => val = object.val);
+
+    assert.equal(val, 10);
+    object.val = 20; // Not reactive
+    assert.equal(val, 10);
+  });
+
+  test("properties named __proto__ will not be made reactive", () => {
+    const object = Object.defineProperty(Object.create(null), "__proto__", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: 10
+    });
+
+    object.__proto__ = 20;
+    assert.strictEqual(object.__proto__, 20);
+    assert.strictEqual(Object.getPrototypeOf(object), null);
+
+    const descriptor = () => Object.assign({}, Object.getOwnPropertyDescriptor(object, "__proto__"));
+
+    const originalDescriptor = descriptor();
+    observe(object);
+    const observedDescriptor = descriptor();
+
+    assert.deepEqual(observedDescriptor, originalDescriptor);
+  });
+
+  test("arrays are not reactive", () => {
+    const object = observe({ array: [1, 2, 3] });
+    let times = 0; computed(() => (object.array[1], times++));
+
+    assert.equal(times, 1);
+    object.array[1] = 4; // Not reactive
+    assert.equal(times, 1);
+    object.array.pop();
+    object.array.pop();
+    object.array.push(3); // Still not reactive :P (no array function hacks)
+    assert.equal(times, 1);
+    object.array[1] = 10;
+    object.array = object.array; // There we go!
+    assert.equal(times, 2);
+  });
+
+});
+
+suite("causing problems :)", () => {
+
+  const nonObjects = [
+    undefined, null, false, true,
+    0, 1, -1, 0.5, -0.5,
+    "", "Hello, world.",
+    0n, 1n, 1_000_000_000_000_000_000_000_000_000_000n,
+    Symbol(), Symbol("Example"),
+  ];
+
+  const nonFunctions = [
+    ...nonObjects,
+    {}, { x: 10, y: true }, { obj: { hello() {} }, goodbye() {} },
+    new Date(), new RegExp("test"), new Map()
+  ];
+
+  test("observe doesnt like when its first argument is not an object", () => {
+    nonObjects.forEach(val => assert.throws(() => observe(val)));
+  });
+
+  test("ignore also hates arguments that arent objects", () => {
+    nonObjects.forEach(val => assert.throws(() => ignore(val)));
+  });
+
+  test("computed isnt fond of arguments that dont implement [[Call]]", () => {
+    nonFunctions.forEach(val => assert.throws(() => computed(val)));
+  });
+
+  test("computed complains if you create an infinite loop with two computed functions that trigger eachother", () => {
+    const object = observe({ x: 10, y: 20 });
+    computed(() => {
+      object.x = object.y + 1;
+    });
+    function oops() {
+      object.y = object.x + 1;
+    }
+
+    assert.throws(() => computed(oops));
+  });
+
+  test("dispose wont eat arguments that arent functions because they taste bad", () => {
+    nonFunctions.forEach(val => assert.throws(() => dispose(val)));
+  });
+
+  test("dispose will get mad if you call it without any arguments outside of a computed function", () => {
+    assert.throws(() => dispose());
+  });
+
+});
