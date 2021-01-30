@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Patella Example - Concatenator</title>
+  </head>
+  <body>
+    <main>
+      <h1>Concatenator</h1>
+      <input type="text" oninput="model.first = value"/>
+      <input type="text" oninput="model.second = value"/>
+      <h3 id="output"></h1>
+    </main>
+    <footer>
+      <a href="https://github.com/luawtf/Patella/blob/master/examples/concatenator.html">View source</a>
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/patella@2.0.0-PRERELEASE"></script>
+    <script>
+      const model = Patella.observe({
+        first: "",
+        second: "",
+        full: ""
+      });
+      Patella.computed(() =>
+        model.full = model.first + " " + model.second
+      );
+      Patella.computed(() =>
+        document.getElementById("output").innerText = model.full
+      );
+    </script>
+  </body>
+</html>
