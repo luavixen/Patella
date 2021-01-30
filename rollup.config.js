@@ -54,13 +54,13 @@ const terser = {
 };
 
 const input = (input, ...outputs) => ({ input, output: outputs });
-const output = (file, format, ...plugins) => ({
+const output = (file, format, sourcemap = true, ...plugins) => ({
   file,
   format,
+  sourcemap,
   plugins,
   name: "Patella",
   indent: "  ",
-  sourcemap: true,
   esModule: false,
   strict: false,
   freeze: false
@@ -70,7 +70,7 @@ export default input("lib/patella.js",
   output("dist/patella.esm.js", "esm"),
   output("dist/patella.cjs.js", "cjs"),
   output("dist/patella.iife.js", "iife"),
-  output("dist/patella.esm.min.js", "esm", terser),
-  output("dist/patella.cjs.min.js", "cjs", uglify, terser),
-  output("dist/patella.iife.min.js", "iife", uglify, terser)
+  output("dist/patella.esm.min.js", "esm", "hidden", terser),
+  output("dist/patella.cjs.min.js", "cjs", "hidden", uglify, terser),
+  output("dist/patella.iife.min.js", "iife", "hidden", uglify, terser)
 );
