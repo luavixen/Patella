@@ -1,6 +1,6 @@
 {
   "name": "patella",
-  "version": "2.0.0",
+  "version": "2.0.0-PRERELEASE",
   "description": "Patella is a library for reactive programming in JavaScript, inspired by Hyperactiv and Vue.js.",
   "author": "Lua MacDougall <lua@foxgirl.dev> (https://foxgirl.dev)",
   "license": "MIT",

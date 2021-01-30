@@ -1,4 +1,4 @@
-<p>
+<!-- <p>
   <a href="https://www.npmjs.com/package/patella">
     <img src="https://badgen.net/npm/v/patella?style=flat-square">
   </a>
@@ -20,10 +20,13 @@
   <a href="https://github.com/luawtf/Patella/blob/master/LICENSE">
     <img src="https://badgen.net/github/license/luawtf/Patella?style=flat-square">
   </a>
-</p>
+</p> -->
 
 # Patella &#x1F501;
 Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Hyperactiv and Vue.js.
+
+## v2.0.0-PRERELEASE
+This is a prerelease build of Patella used for testing, please use the normal v2.0.0 release when it is available.
 
 ## Authors
 Made with ❤ by Lua MacDougall ([lua.wtf](https://lua.wtf/))
