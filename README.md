@@ -23,7 +23,9 @@
 </p> -->
 
 # Patella &#x1F501;
-Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by Hyperactiv and Vue.js.
+Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by [Hyperactiv](https://github.com/elbywan/hyperactiv) and [Vue.js](https://vuejs.org/).
+
+Patella provides functions for observing object mutations and acting on those mutations automatically.
 
 ## Authors
 Made with ❤ by Lua MacDougall ([lua.wtf](https://lua.wtf/))
