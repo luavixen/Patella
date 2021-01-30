@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Patella Example - Pony Browser</title>
+    <script src="https://cdn.jsdelivr.net/npm/patella@2.0.0-PRERELEASE"></script>
+  </head>
+  <body>
+    <main id="app">
+      <h1>Pony Browser</h1> 
+      <select></select>
+      <ul></ul>
+      <input type="text" placeholder="Add another pony"/>
+    </main>
+    <script>
+      // Find elements
+      const $app = document.getElementById("app");
+      const [, $select, $list, $input] = $app.children;
+
+      // Declare model
+      const model = Patella.observe({
+        // Currently selected character set
+        selected: {
+          key: "mane6",
+          current: null // Reference to current character set
+        },
+        // All character sets
+        characterSets: {
+          mane6: {
+            name: "Mane 6",
+            members: [
+              "Twilight Sparkle",
+              "Applejack",
+              "Fluttershy",
+              "Rarity",
+              "Pinkie Pie",
+              "Rainbow Dash"
+              // TODO: Add Spike
+            ]
+          },
+          cmc: {
+            name: "Cutie Mark Crusaders",
+            members: [
+              "Apple Bloom",
+              "Scootaloo",
+              "Sweetie Belle",
+              "Babs Seed",
+              "Gabby"
+            ]
+          },
+          royalty: {
+            name: "Royalty",
+            members: [
+              "Princess Celestia",
+              "Princess Luna",
+              "Prince Blueblood",
+              "Shining Armor",
+              "Princess Cadance",
+              "Prince Rutherford",
+              "Flurry Heart",
+              "Ember",
+              "Thorax",
+              "Princess Skystar",
+              "Queen Novo",
+              "Princess Amore"
+            ]
+          },
+          cool: {
+            name: "Cool Ponies :P",
+            members: [
+              "The Great and Powerful Trixie",
+              "Derpy (Muffins!)",
+              "DJ Pon-3",
+              "Discord",
+              "Maud Pie",
+              "Octavia Melody"
+            ]
+          }
+        }
+      });
+
+      // Populate <select>
+      for (const [value, { name }] of Object.entries(model.characterSets)) {
+        const $option = document.createElement("option");
+        $option.value = value;
+        $option.innerText = name;
+        $select.appendChild($option);
+      }
+
+      // Connect model.selected.key -> model.selected.current
+      Patella.computed(() => {
+        model.selected.current = model.characterSets[model.selected.key];
+      });
+
+      // Connect model.selected.current.members -> <ul>
+      Patella.computed(() => {
+        $list.innerHTML = "";
+        for (const member of model.selected.current.members) {
+          const $entry = document.createElement("li");
+          $entry.innerText = member;
+          $list.appendChild($entry);
+        }
+      });
+
+      // Connect <select> -> model.selected.key
+      $select.addEventListener("change", () => {
+        model.selected.key = $select.value;
+      });
+
+      // Connect <input> -> model.selected.current.members
+      $input.addEventListener("keyup", ({ key }) => {
+        if (key !== "Enter") return;
+
+        const currentSet = model.selected.current;
+        currentSet.members = [
+          ...currentSet.members,
+          $input.value
+        ];
+
+        $input.value = "";
+      });
+    </script>
+    <footer>
+      <a href="https://github.com/luawtf/Patella/blob/master/examples/concatenator.html">View source</a>
+    </footer>
+  </body>
+</html>

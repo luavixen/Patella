@@ -1,16 +1,10 @@
 root = true
 
-[*]
 charset = utf-8
-
-trim_trailing_whitespace = false
-insert_final_newline = true
-
 end_of_line = lf
 
-indent_style = space
 indent_size = 2
-tab_width = 2
+indent_style = space
 
-[*.{c,cpp,h,hpp,ts,js,json,sh}]
+insert_final_newline = true
 trim_trailing_whitespace = true

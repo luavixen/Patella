@@ -1,11 +1,6 @@
-.nyc_output
-coverage
-
-.vscode
-
 .github
-
 .editorconfig
 .gitignore
-
-index.test.js
+test
+coverage
+rollup.config.js
