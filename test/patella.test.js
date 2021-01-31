@@ -624,6 +624,50 @@ suite("edge cases", () => {
     assert.strictEqual(times, 2);
   });
 
+  suite("argument returns", () => {
+
+    test("observe returns its first argument", () => {
+      const object = {};
+      assert.strictEqual(observe(object), object);
+      assert.strictEqual(observe(observe(object)), object);
+    });
+
+    test("ignore returns its first argument", () => {
+      const object = {};
+      assert.strictEqual(ignore(object), object);
+      assert.strictEqual(ignore(ignore(object)), object);
+    });
+
+    test("computed returns its first argument", () => {
+      function func() {}
+      assert.strictEqual(computed(func), func);
+      assert.strictEqual(computed(computed(func)), func);
+    });
+
+    test("dispose returns its first argument", () => {
+      function func() {}
+      assert.strictEqual(dispose(func), func);
+      assert.strictEqual(dispose(dispose(func)), func);
+    });
+
+    test("dispose returns nothing if called without a valid first argument", () => {
+      computed(() => {
+        assert.isUndefined(dispose());
+        assert.isUndefined(dispose(null));
+        assert.isUndefined(dispose(undefined));
+        assert.isUndefined(dispose(null, null));
+        assert.isUndefined(dispose(null, undefined));
+        assert.isUndefined(dispose(null, false));
+        assert.isUndefined(dispose(null, true));
+        assert.isUndefined(dispose(undefined, null));
+        assert.isUndefined(dispose(undefined, undefined));
+        assert.isUndefined(dispose(undefined, false));
+        assert.isUndefined(dispose(undefined, true));
+      });
+    });
+
+  });
+
   suite("observed object compatibility", () => {
 
     test("reactive properties can be get/set like normal", () => {
