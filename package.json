@@ -22,7 +22,7 @@
   "main": "./lib/patella.js",
   "types": "./lib/patella.d.ts",
   "jsdelivr": "./dist/patella.iife.min.js",
-  "unpkg": "./dist/patella.iffe.min.js",
+  "unpkg": "./dist/patella.iife.min.js",
   "exports": {
     ".": {
       "import": "./lib/patella.js",
