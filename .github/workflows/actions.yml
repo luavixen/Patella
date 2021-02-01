@@ -8,8 +8,8 @@ on:
     branches:
       - master
   release:
-    branches:
-      - master
+    types:
+      - published
 
 jobs:
   test:
@@ -45,20 +45,3 @@ jobs:
       run: npm publish
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-  gpr:
-    name: Publish to the GPR
-    if: github.event_name == 'release'
-    needs: test
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2
-      with:
-        node-version: 14
-        registry-url: https://npm.pkg.github.com
-    - name: Install dependencies
-      run: npm ci
-    - name: Publish
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
