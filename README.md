@@ -24,11 +24,12 @@
 
 # Patella &#x1F501;
 Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by [Hyperactiv](https://github.com/elbywan/hyperactiv) and [Vue.js](https://vuejs.org/).
+Patella is compatable with Chrome 5, Firefox 4, and Internet Explorer 9.
 
 Jump to one of:
   - [Installation](#installation)
   - [Usage](#usage)
-  - [Examples and Snippets](#examples-and-snippets)
+  - [Examples and snippets](#examples-and-snippets)
   - [Pitfalls](#pitfalls)
   - [API](#api)
   - [Authors](#authors)
@@ -107,13 +108,13 @@ console.log(calculator.sum, calculator.product); // Output: 13 30
 Pretty simple, right?
 Patella's main goal is to be as simple as possible, you only need 2 functions to build almost anything.
 
-## Examples and Snippets
+## Examples and snippets
 Jump to one of:
   - [Concatenator](#concatenator)
-  - [Debounced Search](#debounced-search)
-  - [Pony Browser](#pony-browser)
-  - [Multiple Objects Snippet](#multiple-objects-snippet)
-  - [Linked Computed Functions Snippet](#linked-computed-functions-snippet)
+  - [Debounced search](#debounced-search)
+  - [Pony browser](#pony-browser)
+  - [Multiple objects snippet](#multiple-objects-snippet)
+  - [Linked computed functions snippet](#linked-computed-functions-snippet)
 
 ### Concatenator
 ```html
@@ -139,7 +140,7 @@ Jump to one of:
 ![](./examples/concatenator-vid.gif)<br>
 View the [full source](./examples/concatenator.html) or [try it on JSFiddle](https://jsfiddle.net/luawtf/zvnm4jp7/latest).
 
-### Debounced Search
+### Debounced search
 ```html
 <h1>Debounced Search</h1>
 <input type="text" oninput="model.input = value" placeholder="Enter your debounced search"/>
@@ -169,7 +170,7 @@ View the [full source](./examples/concatenator.html) or [try it on JSFiddle](htt
 ![](./examples/debounce-vid.gif)<br>
 View the [full source](./examples/debounce.html) or [try it on JSFiddle](https://jsfiddle.net/luawtf/abd3qxft/latest).
 
-### Pony Browser
+### Pony browser
 ```html
 <main id="app">
   <h1>Pony Browser</h1> 
@@ -232,7 +233,7 @@ View the [full source](./examples/debounce.html) or [try it on JSFiddle](https:/
 ![](./examples/pony-vid.gif)<br>
 View the [full source](./examples/pony.html) or [try it on JSFiddle](https://jsfiddle.net/luawtf/84wmaz0g/latest).
 
-## Multiple Objects Snippet
+## Multiple objects snippet
 ```javascript
 // Setting up some reactive objects that contain some data about a US president...
 // Disclaimer: I am not an American :P
@@ -268,7 +269,7 @@ person.name = {
 person.name.first = "Thomas"; // Output: Thomas's username is big-george123 (289 years old)
 ```
 
-### Linked Computed Functions Snippet
+### Linked computed functions snippet
 ```javascript
 // Create our nums object, with some default values for properties that will be computed
 const nums = Patella.observe({
@@ -299,7 +300,171 @@ console.log(nums.sumAllSums); // Output: 459
 ```
 
 ## Pitfalls
-__TODO__
+Patella uses JavaScript's [getters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/get)[ and ](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)[setters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/set) to make all the its reactivity magic possible, which comes with some tradeoffs that other libraries like [Hyperactiv](https://github.com/elbywan/hyperactiv) (which uses [Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)) don't have to deal with.
+This section details some of the stuff to look out for when using Patella in your applications.
+
+### Computed functions can cause infinite loops
+```javascript
+const object = Patella.observe({ x: 10, y: 20 });
+
+Patella.computed(function one() {
+  if (object.x > 20) object.y++;
+});
+
+Patella.computed(function two() {
+  if (object.y > 20) object.x++;
+});
+
+object.x = 25;
+// Uncaught Error: Computed queue overflow! Last 10 functions in the queue:
+// 1993: one
+// 1994: two
+// 1995: one
+// 1996: two
+// 1997: one
+// 1998: two
+// 1999: one
+// 2000: two
+// 2001: one
+// 2002: two
+// 2003: one
+```
+
+### Array mutations do not trigger dependencies
+```javascript
+const object = Patella.observe({
+  array: [1, 2, 3]
+});
+
+Patella.computed(() => console.log(object.array)); // Output: 1,2,3
+
+object.array[2] = 4; // No output, arrays are not reactive!
+object.array.push(5); // Still no output, as Patella does not replace array methods
+
+// If you want to use arrays, do it like this:
+// 1. Run your operations
+object.array[2] = 3;
+object.array[3] = 4;
+object.array.push(5);
+// 2. Then set the array to itself
+object.array = object.array; // Output: 1,2,3,4,5
+```
+
+### Properties added after observation are not reactive
+```javascript
+const object = Patella.observe({ x: 10 });
+object.y = 20;
+
+Patella.computed(() => console.log(object.x)); // Output: 10
+Patella.computed(() => console.log(object.y)); // Output: 20
+
+object.x += 2; // Output: 12
+
+object.y += 2; // No output, as this property was added after observation
+
+Patella.observe(object);
+
+object.y += 2; // Still no output, as objects cannot be re-observed
+```
+
+### Prototypes will not be made reactive unless explicitly observed
+```javascript
+const object = { a: 20 };
+const prototype = { b: 10 };
+Object.setPrototypeOf(object, prototype);
+
+Patella.observe(object);
+
+Patella.computed(() => console.log(object.a)); // Output: 10
+Patella.computed(() => console.log(object.b)); // Output: 20
+
+object.a = 15; // Output: 15
+
+object.b = 30; // No output, as this isn't an actual property on the object
+prototype.b = 36; // No output, as prototypes are not made reactive by observe
+
+Patella.observe(prototype);
+
+prototype.b = 32; // Output: 32
+```
+
+### Non-enumerable and non-configurable properties will not be made reactive
+```javascript
+const object = { x: 1 };
+Object.defineProperty(object, "y", {
+  configurable: true,
+  enumerable: false,
+  value: 2
+});
+Object.defineProperty(object, "z", {
+  configurable: false,
+  enumerable: true,
+  value: 3
+});
+
+Patella.observe(object);
+
+Patella.computed(() => console.log(object.x)); // Output: 1
+Patella.computed(() => console.log(object.y)); // Output: 2
+Patella.computed(() => console.log(object.z)); // Output: 3
+
+object.x--; // Output: 0
+
+object.y--; // No output as this property is non-enumerable
+object.z--; // No output as this property is non-configurable
+```
+
+### Enumerable and configurable but non-writable properties will be made writable
+```javascript
+const object = {};
+Object.defineProperty(object, "val", {
+  configurable: true,
+  enumerable: true,
+  writable: false,
+  value: 10
+});
+
+object.val = 20; // Does nothing
+console.log(object.val); // Output: 10
+
+Patella.observe(object);
+
+object.val = 20; // Works because the property descriptor has been overwritten
+console.log(object.val); // Output: 20
+```
+
+### Getter/setter properties will be accessed then lose their getter/setters
+```javascript
+const object = {
+  get val() {
+    console.log("Gotten!");
+    return 10;
+  }
+};
+
+object.val; // Output: Gotten!
+
+Patella.observe(object); // Output: Gotten!
+
+object.val; // No output as the getter has been overwritten
+```
+
+### Properties named `__proto__` are ignored
+```javascript
+const object = {};
+Object.defineProperty(object, "__proto__", {
+  configurable: true,
+  enumerable: true,
+  writable: true,
+  value: 10
+});
+
+Patella.observe(object);
+
+Patella.computed(() => console.log(object.__proto__)); // Output: 10
+
+object.__proto__++; // No output as properties named __proto__ are ignored
+```
 
 ## API
 <h4 id="observe"><code>function observe(object)</code></h4>
