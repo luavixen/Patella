@@ -24,7 +24,9 @@
 
 # Patella &#x1F501;
 Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by [Hyperactiv](https://github.com/elbywan/hyperactiv) and [Vue.js](https://vuejs.org/).
-Patella is compatable with Chrome 5, Firefox 4, and Internet Explorer 9.
+Patella is compatible with Chrome 5, Firefox 4, and Internet Explorer 9.
+
+Also, the [patellar tendon is responsible for the well known "knee-jerk reaction"](https://en.wikipedia.org/wiki/Patellar_reflex).
 
 Jump to one of:
   - [Installation](#installation)
@@ -58,8 +60,8 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
 </script>
 ```
 
-Various other builds of Patella are available in the [dist](./dist) folder including sourcemaps and minified versions.
-Minification is performed using both [Terser](https://github.com/terser/terser) and [UglifyJS](https://github.com/mishoo/UglifyJS) using custom configurations designed for a balance of speed and size (Patella is a microlibrary at 900~ bytes gzipped).
+Various other Patella builds are available in the [dist](./dist) folder, including sourcemaps and minified versions.
+Minification is performed using both [Terser](https://github.com/terser/terser) and [UglifyJS](https://github.com/mishoo/UglifyJS) using custom configurations designed for a balance of speed and size (Patella is a micro-library at 900~ bytes gzipped).
 
 ## Usage
 Patella provides functions for observing object mutations and acting on those mutations automatically.
@@ -82,7 +84,7 @@ Possibly the best way to learn is by example, so let's take a page out of [Vue.j
 ![](./examples/counter-vid.gif)<br>
 View the [full source](./examples/counter.html) or [try it on JSFiddle](https://jsfiddle.net/luawtf/hL6g4emk/latest).
 
-Notice how in the above example, the `<button>` doesn't do any extra magic to change it's text when clicked, it just increments the model's click counter, which is "connected" to the button's text in the computed function.
+Notice how in the above example, the `<button>` doesn't do any extra magic to change its text when clicked; it just increments the model's click counter, which is "connected" to the button's text in the computed function.
 
 Now let's try doing some math, here's a snippet that adds and multiplies two numbers:
 ```javascript
@@ -106,7 +108,7 @@ calcuator.left = 3;
 console.log(calculator.sum, calculator.product); // Output: 13 30
 ```
 Pretty simple, right?
-Patella's main goal is to be as simple as possible, you only need 2 functions to build almost anything.
+Patella's main goal is to be as simple as possible; you only need two functions to build almost anything.
 
 ## Examples and snippets
 Jump to one of:
