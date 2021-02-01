@@ -587,7 +587,7 @@ suite("edge cases", () => {
     assert.strictEqual(val, 10);
   });
 
-  test("nonwritable but enumerable and configurable properties will be made reactive", () => {
+  test("nonwritable but enumerable and configurable properties will be overwritten", () => {
     const object = observe(Object.defineProperty({}, "val", {
       configurable: true,
       enumerable: true,
@@ -598,33 +598,24 @@ suite("edge cases", () => {
     assert.strictEqual(object.val, 10);
     object.val = 20;
     assert.strictEqual(object.val, 20);
-
-    observe(object);
-    let val; computed(() => val = object.val);
-    object.val = 30;
-    assert.strictEqual(val, 30);
   });
 
-  test("enumerable and configurable getter/setter properties will be made reactive, removing the original getter/setters", () => {
-    const object = observe(Object.defineProperty({}, "val", {
-      configurable: true,
-      enumerable: true,
-      get() {
+  test("getter/setter properties will be accessed then overwritten", () => {
+    let accessCount = 0;
+    const object = {
+      get val() {
+        accessCount++;
         return 10;
-      },
-      set(value) {
-        throw new Error("Cannot write to readonly property");
       }
-    }));
+    };
 
-    assert.strictEqual(object.val, 10);
-    object.val = 20;
-    assert.strictEqual(object.val, 20);
-
+    assert.strictEqual(accessCount, 0);
+    object.val;
+    assert.strictEqual(accessCount, 1);
     observe(object);
-    let val; computed(() => val = object.val);
-    object.val = 30;
-    assert.strictEqual(val, 30);
+    assert.strictEqual(accessCount, 2);
+    object.val; // Overwritten by observe
+    assert.strictEqual(accessCount, 2);
   });
 
   test("properties named __proto__ will not be made reactive", () => {
