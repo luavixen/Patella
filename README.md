@@ -5,7 +5,7 @@
   <a href="https://www.npmjs.com/package/patella?activeTab=dependencies">
     <img src="https://badgen.net/bundlephobia/dependency-count/patella?style=flat-square">
   </a>
-  <a href="https://github.com/luawtf/Luar/blob/master/lib/patella.d.ts">
+  <a href="https://github.com/luawtf/Patella/blob/master/lib/patella.d.ts">
     <img src="https://badgen.net/npm/types/patella?style=flat-square">
   </a>
   <a href="https://bundlephobia.com/result?p=patella">
@@ -50,10 +50,10 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
 ```html
 <script src="https://www.unpkg.com/patella"></script>
 <script>
-  Luar.observe({});
-  Luar.ignore({});
-  Luar.computed(function () {});
-  Luar.dispose(function () {});
+  Patella.observe({});
+  Patella.ignore({});
+  Patella.computed(function () {});
+  Patella.dispose(function () {});
 </script>
 ```
 
@@ -236,17 +236,17 @@ View the [full source](./examples/pony.html) or [try it on JSFiddle](https://jsf
 ```javascript
 // Setting up some reactive objects that contain some data about a US president...
 // Disclaimer: I am not an American :P
-const person = observe({
+const person = Patella.observe({
   name: { first: "George", last: "Washington" },
   age: 288
 });
-const account = observe({
+const account = Patella.observe({
   user: "big-george12",
   password: "IHateTheQueen!1"
 });
 
 // Declare that we will output a log message whenever person.name.first, account.user, or person.age are updated
-computed(() => console.log(
+Patella.computed(() => console.log(
   `${person.name.first}'s username is ${account.user} (${person.age} years old)`
 )); // Output: George's username is big-george12 (288 years old)
 
@@ -271,7 +271,7 @@ person.name.first = "Thomas"; // Output: Thomas's username is big-george123 (289
 ### Linked Computed Functions Snippet
 ```javascript
 // Create our nums object, with some default values for properties that will be computed
-const nums = observe({
+const nums = Patella.observe({
   a: 33, b: 23, c: 84,
   x: 0,
   sumAB: 0, sumAX: 0, sumCX: 0,
@@ -279,15 +279,15 @@ const nums = observe({
 });
 
 // Declare that (x) will be equal to (a + b + c)
-computed(() => nums.x = nums.a + nums.b + nums.c);
+Patella.computed(() => nums.x = nums.a + nums.b + nums.c);
 // Declare that (sumAB) will be equal to (a + b)
-computed(() => nums.sumAB = nums.a + nums.b);
+Patella.computed(() => nums.sumAB = nums.a + nums.b);
 // Declare that (sumAX) will be equal to (a + x)
-computed(() => nums.sumAX = nums.a + nums.x);
+Patella.computed(() => nums.sumAX = nums.a + nums.x);
 // Declare that (sumCX) will be equal to (c + x)
-computed(() => nums.sumCX = nums.c + nums.x);
+Patella.computed(() => nums.sumCX = nums.c + nums.x);
 // Declare that (sumAllSums) will be equal to (sumAB + sumAX + sumCX)
-computed(() => nums.sumAllSums = nums.sumAB + nums.sumAX + nums.sumCX);
+Patella.computed(() => nums.sumAllSums = nums.sumAB + nums.sumAX + nums.sumCX);
 
 // Now lets check the (sumAllSums) value
 console.log(nums.sumAllSums); // Output: 453
@@ -302,8 +302,6 @@ console.log(nums.sumAllSums); // Output: 459
 __TODO__
 
 ## API
-<br>
-
 <h4 id="observe"><code>function observe(object)</code></h4>
 Description:
 <ul>
@@ -321,7 +319,6 @@ Returns:
 <ul>
   <li>Input <code>object</code>, now reactive</li>
 </ul>
-<br><br>
 
 <h4 id="ignore"><code>function ignore(object)</code></h4>
 Description:
@@ -339,7 +336,6 @@ Returns:
 <ul>
   <li>Input <code>object</code>, now permanently ignored</li>
 </ul>
-<br><br>
 
 <h4 id="computed"><code>function computed(func)</code></h4>
 Description:
@@ -358,7 +354,6 @@ Returns:
 <ul>
   <li>Input <code>func</code></li>
 </ul>
-<br><br>
 
 <h4 id="dispose"><code>function dispose(func, clean)</code></h4>
 Description:
@@ -377,7 +372,6 @@ Returns:
 <ul>
   <li>Input <code>func</code> if <code>func</code> is valid, otherwise <code>undefined</code></li>
 </ul>
-<br><br>
 
 ## Authors
 Made with ❤ by Lua MacDougall ([lua.wtf](https://lua.wtf/))
