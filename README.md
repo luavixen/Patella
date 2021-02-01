@@ -300,7 +300,7 @@ console.log(nums.sumAllSums); // Output: 459
 ```
 
 ## Pitfalls
-Patella uses JavaScript's [getters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/get)[ and ](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)[setters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/set) to make all the its reactivity magic possible, which comes with some tradeoffs that other libraries like [Hyperactiv](https://github.com/elbywan/hyperactiv) (which uses [Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)) don't have to deal with.
+Patella uses JavaScript's [getters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/get)[ and ](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty)[setters](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Functions/set) to make all the reactivity magic possible, which comes with some tradeoffs that other libraries like [Hyperactiv](https://github.com/elbywan/hyperactiv) (which uses [Proxy](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Proxy)) don't have to deal with.
 This section details some of the stuff to look out for when using Patella in your applications.
 
 ### Computed functions can cause infinite loops
