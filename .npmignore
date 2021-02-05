@@ -3,4 +3,5 @@
 .gitignore
 test
 coverage
+examples
 rollup.config.js
