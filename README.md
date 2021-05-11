@@ -26,7 +26,7 @@
 Patella, formerly known as Luar, is a library for <a href="https://wikipedia.org/wiki/Reactive_programming">reactive programming</a> in JavaScript, inspired by [Hyperactiv](https://github.com/elbywan/hyperactiv) and [Vue.js](https://vuejs.org/).
 Patella is compatible with Chrome 5, Firefox 4, and Internet Explorer 9.
 
-Also, the [patellar tendon is responsible for the well known "knee-jerk reaction"](https://en.wikipedia.org/wiki/Patellar_reflex).
+The [patellar tendon is responsible for the well known "knee-jerk reaction"](https://wikipedia.org/wiki/Patellar_reflex).
 
 Jump to one of:
   - [Installation](#installation)
@@ -55,8 +55,8 @@ Or, for people working without a bundler, it can be included from [UNPKG](https:
 <script>
   Patella.observe({});
   Patella.ignore({});
-  Patella.computed(function () {});
-  Patella.dispose(function () {});
+  Patella.computed(() => {});
+  Patella.dispose(() => {});
 </script>
 ```
 
@@ -96,7 +96,7 @@ const calculator = Patella.observe({
 });
 
 // Connect left, right -> sum
-Patella.computed(() => calculator.sum     = calculator.left + calculator.right);
+Patella.computed(() => calculator.sum = calculator.left + calculator.right);
 // Connect left, right -> product
 Patella.computed(() => calculator.product = calculator.left * calculator.right);
 
@@ -107,7 +107,7 @@ console.log(calculator.sum, calculator.product); // Output: 12 20
 calcuator.left = 3;
 console.log(calculator.sum, calculator.product); // Output: 13 30
 ```
-Pretty simple, right?
+Pretty cool, right?
 Patella's main goal is to be as simple as possible; you only need two functions to build almost anything.
 
 ## Examples and snippets
@@ -175,7 +175,7 @@ View the [full source](./examples/debounce.html) or [try it on JSFiddle](https:/
 ### Pony browser
 ```html
 <main id="app">
-  <h1>Pony Browser</h1> 
+  <h1>Pony Browser</h1>
   <select></select>
   <ul></ul>
   <input type="text" placeholder="Add another pony"/>
@@ -475,12 +475,12 @@ Description:
   <li>
     Makes an object and its properties reactive recursively.
     Subobjects (but not subfunctions!) will also be observed.
-    Note that <a href="#observe"><code>observe</code></a> does not create a new object, it mutates the object passed into it: <code>observe(object) === object</code>.
+    Note that <code>observe</code> does not create a new object, it mutates the object passed into it: <code>observe(object) === object</code>.
   </li>
 </ul>
 Parameters:
 <ul>
-  <li><code>object</code> - Object or function to make reactive</li>
+  <li><code>object</code> &mdash; Object or function to make reactive</li>
 </ul>
 Returns:
 <ul>
@@ -491,13 +491,13 @@ Returns:
 Description:
 <ul>
   <li>
-    Prevents an object from being made reactive, <a href="#observe"><code>observe</code></a> will do nothing.
-    Note that <a href="#ignore"><code>ignore</code></a> is not recursive, so subobjects can still be made reactive by calling <a href="#observe"><code>observe</code></a> on them directly.
+    Prevents an object from being made reactive, <code>observe</code> will do nothing.
+    Note that <code>ignore</code> is not recursive, so subobjects can still be made reactive by calling <code>observe</code> on them directly.
   </li>
 </ul>
 Parameters:
 <ul>
-  <li><code>object</code> - Object or function to ignore</li>
+  <li><code>object</code> &mdash; Object or function to ignore</li>
 </ul>
 Returns:
 <ul>
@@ -510,12 +510,12 @@ Description:
   <li>
     Calls <code>func</code> with no arguments and records a list of all the reactive properties it accesses.
     <code>func</code> will then be called again whenever any of the accessed properties are mutated.
-    Note that if <code>func</code> has been <a href="#dispose"><code>dispose</code></a>d with <code>!!clean === false</code>, no operation will be performed.
+    Note that if <code>func</code> has been <code>dispose</code>d with <code>!!clean === false</code>, no operation will be performed.
   </li>
 </ul>
 Parameters:
 <ul>
-  <li><code>func</code> - Function to execute</li>
+  <li><code>func</code> &mdash; Function to execute</li>
 </ul>
 Returns:
 <ul>
@@ -526,14 +526,14 @@ Returns:
 Description:
 <ul>
   <li>
-    "Disposes" a function that was run with <a href="#computed"><code>computed</code></a>, deregistering it so that it will no longer be called whenever any of its accessed reactive properties update.
-    The <code>clean</code> parameter controls whether calling <a href="#computed"><code>computed</code></a> with <code>func</code> will work or no-op.
+    "Disposes" a function that was run with <code>computed</code>, deregistering it so that it will no longer be called whenever any of its accessed reactive properties update.
+    The <code>clean</code> parameter controls whether calling <code>computed</code> with <code>func</code> will work or no-op.
   </li>
 </ul>
 Parameters:
 <ul>
-  <li><code>func</code> - Function to dispose, omit to dispose the currently executing computed function</li>
-  <li><code>clean</code> - If truthy, only deregister the function from all dependencies, but allow it to be used with <a href="#computed"><code>computed</code></a> again in the future</li>
+  <li><code>func</code> &mdash; Function to dispose, omit to dispose the currently executing computed function</li>
+  <li><code>clean</code> &mdash; If truthy, only deregister the function from all dependencies, but allow it to be used with <code>computed</code> again in the future</li>
 </ul>
 Returns:
 <ul>
