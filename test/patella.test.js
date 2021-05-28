@@ -365,7 +365,7 @@ suite("normal usage", () => {
     assert.strictEqual(countToFour.number, 4);
   });
 
-  test("dispose can be called in \"clean mode\" which removes all dependencies but allows the computed function to be notified manually", () => {
+  test("dispose can be called in 'clean mode' which removes all dependencies but allows the computed function to be notified manually", () => {
     const rooter = observe({
       in: 0,
       out: 0
@@ -449,6 +449,11 @@ suite("causing problems :)", () => {
     "", "Hello, world.",
     0n, 1n, 1_000_000_000_000_000_000_000_000_000_000n,
     Symbol(), Symbol("Example"),
+    [], [1, 2, 3, 4, 5], [
+      "Arrays are not considered objects by isObject",
+      "This is to prevent silly things like trying to observe an array with thousands of elements",
+      "Or the fact that observation would most definitely break many important array features"
+    ]
   ];
 
   const nonFunctions = [
@@ -457,19 +462,19 @@ suite("causing problems :)", () => {
     new Date(), new RegExp("test"), new Map()
   ];
 
-  test("observe doesnt like when its first argument is not an object", () => {
+  test("observe fails if passed a non-object (not including arrays) value", () => {
     nonObjects.forEach(val => assert.throws(() => observe(val)));
   });
 
-  test("ignore also hates arguments that arent objects", () => {
+  test("ignore fails if passed a non-object (not including arrays) value", () => {
     nonObjects.forEach(val => assert.throws(() => ignore(val)));
   });
 
-  test("computed isnt fond of arguments that dont implement [[Call]]", () => {
+  test("computed fails if passed a non-callable value", () => {
     nonFunctions.forEach(val => assert.throws(() => computed(val)));
   });
 
-  test("computed complains if you create an infinite loop with two computed functions that trigger eachother", () => {
+  test("computed fails if you create an infinite loop with two computed functions that depend on eachother", () => {
     const object = observe({ x: 10, y: 20 });
     computed(() => {
       object.x = object.y + 1;
@@ -481,11 +486,11 @@ suite("causing problems :)", () => {
     assert.throws(() => computed(oops));
   });
 
-  test("dispose wont eat arguments that arent functions because they taste bad", () => {
+  test("dispose fails if passed a non-callable value", () => {
     nonFunctions.forEach(val => assert.throws(() => dispose(val)));
   });
 
-  test("dispose will get mad if you call it without any arguments outside of a computed function", () => {
+  test("dispose fails if passed no arguments while no computed function is executing", () => {
     assert.throws(() => dispose());
   });
 
@@ -587,7 +592,7 @@ suite("edge cases", () => {
     assert.strictEqual(val, 10);
   });
 
-  test("nonwritable but enumerable and configurable properties will be overwritten", () => {
+  test("nonwritable but enumerable and configurable properties will be overwritten and made writable", () => {
     const object = observe(Object.defineProperty({}, "val", {
       configurable: true,
       enumerable: true,
@@ -598,6 +603,30 @@ suite("edge cases", () => {
     assert.strictEqual(object.val, 10);
     object.val = 20;
     assert.strictEqual(object.val, 20);
+  });
+
+  test("enumerable and configurable properties will remain enumerable and configurable", () => {
+    const oldDescriptor = {
+      configurable: true,
+      enumerable: true,
+      writable: false,
+      value: 10
+    };
+    const object = observe(Object.defineProperty({}, "val", oldDescriptor));
+    const newDescriptor = Object.getOwnPropertyDescriptor(object, "val");
+
+    assert.strictEqual(!!newDescriptor.enumerable, !!oldDescriptor.enumerable);
+    assert.strictEqual(!!newDescriptor.configurable, !!oldDescriptor.configurable);
+  });
+
+  test("no new enumerable properties are added", () => {
+    const object = { a: 10, b: 20, c: 30 };
+
+    const enumeratedKeysBefore = Object.keys(object).sort();
+    observe(object);
+    const enumeratedKeysAfter = Object.keys(object).sort();
+
+    assert.deepEqual(enumeratedKeysBefore, enumeratedKeysAfter);
   });
 
   test("getter/setter properties will be accessed then overwritten", () => {
@@ -653,6 +682,19 @@ suite("edge cases", () => {
     object.array[1] = 10;
     object.array = object.array; // There we go!
     assert.strictEqual(times, 2);
+  });
+
+  test("computed does not leak `computedQueue` in the `this` value", () => {
+    let thisValue;
+    computed(function() {
+      // Patella versions <= 2.1.0 could leak the `computedQueue` in the `this`
+      // value when calling computed functions
+      // This was fixed and now the global this value is used instead
+      thisValue = this;
+    });
+
+    assert.isNotArray(thisValue);
+    assert.strictEqual(thisValue, this);
   });
 
   suite("argument returns", () => {
