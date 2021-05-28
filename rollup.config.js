@@ -48,7 +48,7 @@ const terser = {
       typeofs: false,
       unsafe_comps: true,
       pure_funcs: [
-        "hasProperty", "isObject", "isFunction"
+        "hasOwnProperty", "createSymbol", "isObject", "isFunction"
       ]
     }
   },
