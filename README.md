@@ -12,7 +12,7 @@
     <img src="https://badgen.net/bundlephobia/minzip/patella?style=flat-square">
   </a>
   <a href="https://github.com/luavixen/Patella/actions">
-    <img src="https://badgen.net/github/status/luavixen/Patella/master?label=build&style=flat-square">
+    <img src="https://img.shields.io/github/workflow/status/luavixen/Patella/Continuous%20integration%20and%20deployment?style=flat-square">
   </a>
   <a href="https://coveralls.io/github/luavixen/Patella">
     <img src="https://badgen.net/coveralls/c/github/luavixen/Patella?style=flat-square">
